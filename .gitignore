@@ -1,0 +1,4 @@
+.cache/clangd/index
+build
+bin/rodent.out
+lib/AGL

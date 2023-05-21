@@ -1,4 +1,5 @@
 #include "../lib/AGL/agl.hpp"
+#include <fstream>
 
 int main()
 {
@@ -50,6 +51,8 @@ int main()
 
 	std::string str = "";
 
+	bool escHeld = false;
+
 	while (!event.windowClose())
 	{
 		event.poll();
@@ -99,6 +102,28 @@ int main()
 
 		text.clearText();
 		text.setText(str);
+
+		if (event.isKeyPressed(XK_Escape))
+		{
+			if (escHeld)
+			{
+			} else
+			{
+				std::fstream fs("output.txt", std::ios::out);
+
+				fs << str;
+
+				fs.close();
+
+				std::cout << "Wrote to file" << '\n';
+				
+				escHeld = true;
+			}
+		}
+		else
+		{
+			escHeld = false;
+		}
 	}
 
 	text.clearText();

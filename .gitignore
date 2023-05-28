@@ -2,3 +2,4 @@
 build
 bin/rodent.out
 lib/AGL
+bin/output.txt

@@ -1,12 +1,123 @@
 #include "../lib/AGL/agl.hpp"
 #include <fstream>
 
+#define FONTSIZE 24
+#define BORDER	 2
+#define PADDING	 2
+
+enum Split
+{
+	Vertical,
+	Horizontal,
+	Root,
+};
+
+class Pane : public agl::Drawable
+{
+	public:
+		agl::Rectangle	*rect = nullptr;
+		agl::Vec<int, 2> size;
+		agl::Vec<int, 2> pos   = {0, 0};
+		Split			 split = Split::Root;
+		float			 percent; // 1.0 means Bchild covered, 0.0 Achild covered
+		Pane			*Achild = nullptr;
+		Pane			*Bchild = nullptr;
+		agl::Text		*text	= nullptr;
+		std::string		 str;
+
+		Pane(agl::Rectangle *rect, agl::Text *text) : rect(rect), text(text)
+		{
+		}
+
+		void splitPane(Split type, float percent)
+		{
+			Achild = new Pane(rect, text);
+			Bchild = new Pane(rect, text);
+
+			split		  = type;
+			this->percent = percent;
+
+			return;
+		}
+
+		void updateSize(agl::RenderWindow &window)
+		{
+			XWindowAttributes att = window.getWindowAttributes();
+
+			size.x = att.width;
+			size.y = att.height;
+
+			return;
+		}
+
+		void drawFunction(agl::RenderWindow &window) override
+		{
+			switch (split)
+			{
+				case Split::Vertical:
+					Achild->pos	   = pos;
+					Achild->size.y = size.y * percent;
+					Achild->size.x = size.x;
+
+					Bchild->pos = pos;
+					Bchild->pos.y += Achild->size.y;
+					Bchild->size.y = size.y * (1.0 - percent);
+					Bchild->size.x = size.x;
+
+					window.draw(*Achild);
+					window.draw(*Bchild);
+
+					break;
+				case Split::Horizontal:
+					Achild->pos	   = pos;
+					Achild->size.x = size.x * percent;
+					Achild->size.y = size.y;
+
+					Bchild->pos = pos;
+					Bchild->pos.x += Achild->size.x;
+					Bchild->size.x = size.x * (1.0 - percent);
+					Bchild->size.y = size.y;
+
+					window.draw(*Achild);
+					window.draw(*Bchild);
+
+					break;
+				case Split::Root:
+					rect->setSize(size);
+					rect->setPosition(pos);
+					rect->setColor(agl::Color::Gray);
+					window.drawShape(*rect);
+
+					rect->setSize(size - (agl::Vec<int, 2>{BORDER, BORDER} * 2));
+					rect->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER});
+					rect->setColor(agl::Color::Black);
+					window.drawShape(*rect);
+
+					text->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER} + agl::Vec<int, 2>{PADDING, PADDING});
+					text->clearText();
+					text->setText("test");
+
+					window.drawText(*text);
+
+					break;
+			}
+		}
+
+		~Pane()
+		{
+			delete Achild;
+			delete Bchild;
+		}
+};
+
 int main()
 {
 	agl::RenderWindow window;
 	window.setup({1920, 1080}, "Rodent");
 	window.setClearColor(agl::Color::Black);
-	window.setFPS(30);
+	window.setFPS(60);
+
+	glDisable(GL_DEPTH_TEST);
 
 	agl::Event event;
 	event.setWindow(window);
@@ -41,7 +152,7 @@ int main()
 	rectangle.setSize({1720, 880});
 
 	agl::Font font;
-	font.setup("/usr/share/fonts/TTF/Arial.TTF", 24);
+	font.setup("/usr/share/fonts/TTF/Arial.TTF", FONTSIZE);
 
 	agl::Text text;
 	text.setColor(agl::Color::White);
@@ -53,13 +164,21 @@ int main()
 
 	bool escHeld = false;
 
+	agl::Rectangle rect;
+	rect.setTexture(&blank);
+
+	Pane pane(&rect, &text);
+
+	pane.splitPane(Split::Horizontal, 0.1);
+
 	while (!event.windowClose())
 	{
 		event.poll();
 
 		window.clear();
 
-		window.drawText(text);
+		pane.updateSize(window);
+		window.draw(pane);
 
 		window.display();
 
@@ -100,14 +219,12 @@ int main()
 			}
 		}
 
-		text.clearText();
-		text.setText(str);
-
 		if (event.isKeyPressed(XK_Escape))
 		{
 			if (escHeld)
 			{
-			} else
+			}
+			else
 			{
 				std::fstream fs("output.txt", std::ios::out);
 
@@ -116,7 +233,7 @@ int main()
 				fs.close();
 
 				std::cout << "Wrote to file" << '\n';
-				
+
 				escHeld = true;
 			}
 		}

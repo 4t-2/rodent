@@ -5,6 +5,53 @@
 #define BORDER	 2
 #define PADDING	 2
 
+#define DARKG      \
+	{              \
+		63, 63, 63 \
+	}
+
+class Listener
+{
+	private:
+		std::function<void()> first;
+		std::function<void()> hold;
+		std::function<void()> last;
+		bool				  pastState = false;
+
+	public:
+		Listener(std::function<void()> first, std::function<void()> hold, std::function<void()> last);
+		void update(bool state);
+};
+
+Listener::Listener(std::function<void()> first, std::function<void()> hold, std::function<void()> last)
+{
+	this->first = first;
+	this->hold	= hold;
+	this->last	= last;
+}
+
+void Listener::update(bool state)
+{
+	if (state)
+	{
+		if (pastState)
+		{
+			hold();
+		}
+		else
+		{
+			first();
+
+			pastState = true;
+		}
+	}
+	else if (pastState)
+	{
+		last();
+		pastState = false;
+	}
+}
+
 enum Split
 {
 	Vertical,
@@ -42,66 +89,13 @@ class Pane : public agl::Drawable
 
 		void updateSize(agl::RenderWindow &window)
 		{
-			XWindowAttributes att = window.getWindowAttributes();
-
-			size.x = att.width;
-			size.y = att.height;
+			size.x = window.getWindowAttributes().width;
+			size.y = window.getWindowAttributes().height;
 
 			return;
 		}
 
-		void drawFunction(agl::RenderWindow &window) override
-		{
-			switch (split)
-			{
-				case Split::Vertical:
-					Achild->pos	   = pos;
-					Achild->size.y = size.y * percent;
-					Achild->size.x = size.x;
-
-					Bchild->pos = pos;
-					Bchild->pos.y += Achild->size.y;
-					Bchild->size.y = size.y * (1.0 - percent);
-					Bchild->size.x = size.x;
-
-					window.draw(*Achild);
-					window.draw(*Bchild);
-
-					break;
-				case Split::Horizontal:
-					Achild->pos	   = pos;
-					Achild->size.x = size.x * percent;
-					Achild->size.y = size.y;
-
-					Bchild->pos = pos;
-					Bchild->pos.x += Achild->size.x;
-					Bchild->size.x = size.x * (1.0 - percent);
-					Bchild->size.y = size.y;
-
-					window.draw(*Achild);
-					window.draw(*Bchild);
-
-					break;
-				case Split::Root:
-					rect->setSize(size);
-					rect->setPosition(pos);
-					rect->setColor(agl::Color::Gray);
-					window.drawShape(*rect);
-
-					rect->setSize(size - (agl::Vec<int, 2>{BORDER, BORDER} * 2));
-					rect->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER});
-					rect->setColor(agl::Color::Black);
-					window.drawShape(*rect);
-
-					text->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER} + agl::Vec<int, 2>{PADDING, PADDING});
-					text->clearText();
-					text->setText("test");
-
-					window.drawText(*text);
-
-					break;
-			}
-		}
+		void drawFunction(agl::RenderWindow &window) override;
 
 		~Pane()
 		{
@@ -109,6 +103,87 @@ class Pane : public agl::Drawable
 			delete Bchild;
 		}
 };
+
+Pane			*focusPane = nullptr;
+agl::Vec<int, 2> clickPos;
+bool			 clickEvent = false;
+
+void Pane::drawFunction(agl::RenderWindow &window)
+{
+	switch (split)
+	{
+		case Split::Vertical:
+			Achild->pos	   = pos;
+			Achild->size.y = size.y * percent;
+			Achild->size.x = size.x;
+
+			Bchild->pos = pos;
+			Bchild->pos.y += Achild->size.y;
+			Bchild->size.y = size.y * (1.0 - percent);
+			Bchild->size.x = size.x;
+
+			window.draw(*Achild);
+			window.draw(*Bchild);
+
+			break;
+		case Split::Horizontal:
+			Achild->pos	   = pos;
+			Achild->size.x = size.x * percent;
+			Achild->size.y = size.y;
+
+			Bchild->pos = pos;
+			Bchild->pos.x += Achild->size.x;
+			Bchild->size.x = size.x * (1.0 - percent);
+			Bchild->size.y = size.y;
+
+			window.draw(*Achild);
+			window.draw(*Bchild);
+
+			break;
+		case Split::Root:
+			// logic
+
+			if (clickEvent)
+			{
+				std::cout << clickPos << '\n';
+				if (clickPos.x > pos.x && clickPos.y > pos.y)
+				{
+					if (clickPos.x < (pos.x + size.x) && clickPos.y < (pos.y + size.y))
+					{
+						focusPane = this;
+					}
+				}
+			}
+
+			// render
+			rect->setSize(size);
+			rect->setPosition(pos);
+			rect->setColor(agl::Color::Gray);
+			window.drawShape(*rect);
+
+			rect->setSize(size - agl::Vec<int, 2>{BORDER + BORDER, BORDER + BORDER});
+			rect->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER});
+
+			if (focusPane == this)
+			{
+				rect->setColor(DARKG);
+			}
+			else
+			{
+				rect->setColor(agl::Color::Black);
+			}
+
+			window.drawShape(*rect);
+
+			text->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER} + agl::Vec<int, 2>{PADDING, PADDING});
+			text->clearText();
+			text->setText("test");
+
+			window.drawText(*text);
+
+			break;
+	}
+}
 
 int main()
 {
@@ -145,12 +220,6 @@ int main()
 	agl::Texture blank;
 	blank.setBlank();
 
-	agl::Rectangle rectangle;
-	rectangle.setColor(agl::Color::Cyan);
-	rectangle.setTexture(&blank);
-	rectangle.setPosition({100, 100});
-	rectangle.setSize({1720, 880});
-
 	agl::Font font;
 	font.setup("/usr/share/fonts/TTF/Arial.TTF", FONTSIZE);
 
@@ -166,6 +235,13 @@ int main()
 
 	agl::Rectangle rect;
 	rect.setTexture(&blank);
+
+	Listener mouseListener(
+		[&]() {
+			clickPos   = event.getPointerRootPosition();
+			clickEvent = true;
+		},
+		[&]() { clickEvent = false; }, [&]() { clickEvent = false; });
 
 	Pane pane(&rect, &text);
 
@@ -241,6 +317,17 @@ int main()
 		{
 			escHeld = false;
 		}
+
+		mouseListener.update(event.isPointerButtonPressed(Button1Mask));
+
+		agl::Vec<int, 2> windowSize;
+		windowSize.x = window.getWindowAttributes().width;
+		windowSize.y = window.getWindowAttributes().height;
+
+		camera.setOrthographicProjection(0, windowSize.x, windowSize.y, 0, 0.1, 100);
+		window.setViewport(0, 0, windowSize.x, windowSize.y);
+
+		window.updateMvp(camera);
 	}
 
 	text.clearText();

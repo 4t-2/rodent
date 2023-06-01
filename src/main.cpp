@@ -64,7 +64,7 @@ int main()
 
 	Pane pane(&rect, &text);
 
-	pane.splitPane(Split::Horizontal, 0.1);
+	// pane.splitPane(Split::Horizontal, 0.1);
 
 	while (!event.windowClose())
 	{
@@ -119,6 +119,9 @@ int main()
 		}
 
 		mouseListener.update(event.isPointerButtonPressed(Button1Mask));
+
+		Pane::currentPos = event.getPointerRootPosition();
+		Pane::leftDown = event.isPointerButtonPressed(Button1Mask);
 
 		agl::Vec<int, 2> windowSize;
 		windowSize.x = window.getWindowAttributes().width;

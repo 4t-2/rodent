@@ -22,6 +22,12 @@ struct CursorInfo
 		int				   i;
 };
 
+enum Mode
+{
+	Insert,
+	Select,
+};
+
 class Pane : public agl::Drawable
 {
 	public:
@@ -37,10 +43,20 @@ class Pane : public agl::Drawable
 		agl::Vec<float, 2> textCursorPos;
 		int				   textCursorIndex = 0;
 
+		struct
+		{
+				int startIndex;
+				int endIndex;
+		} selection;
+
 		static Pane			   *focusPane;
 		static bool				clickEvent;
 		static std::string		keybuffer;
 		static agl::Vec<int, 2> clickPos;
+		static agl::Vec<int, 2> currentPos;
+		static bool				leftDown;
+
+		Mode mode = Mode::Insert;
 
 		Pane(agl::Rectangle *rect, agl::Text *text) : rect(rect), text(text)
 		{

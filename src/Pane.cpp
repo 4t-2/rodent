@@ -4,11 +4,13 @@ Pane			*Pane::focusPane  = nullptr;
 bool			 Pane::clickEvent = false;
 std::string		 Pane::keybuffer  = "";
 agl::Vec<int, 2> Pane::clickPos	  = {0, 0};
+agl::Vec<int, 2> Pane::currentPos = {0, 0};
+bool			 Pane::leftDown	  = false;
 
 CursorInfo drawTextExtra(agl::RenderWindow &window, agl::Text &text, float width, agl::TextAlign align,
 						 agl::Vec<float, 2> clickPos)
 {
-	CursorInfo cursorInfo;
+	CursorInfo cursorInfo = {text.getPosition(), -1};
 
 	agl::Rectangle *shape = text.getCharBox();
 
@@ -80,7 +82,7 @@ CursorInfo drawTextExtra(agl::RenderWindow &window, agl::Text &text, float width
 // returns cursor position at index
 CursorInfo drawTextExtra(agl::RenderWindow &window, agl::Text &text, float width, agl::TextAlign align, int index)
 {
-	CursorInfo cursorInfo;
+	CursorInfo cursorInfo = {text.getPosition(), -1};
 
 	agl::Rectangle *shape = text.getCharBox();
 
@@ -192,7 +194,23 @@ void Pane::drawFunction(agl::RenderWindow &window)
 				}
 			}
 
-			if (focusPane == this)
+			if (focusPane == this && mode == Mode::Insert && leftDown)
+			{
+				if (currentPos.x != clickPos.x)
+				{
+					if (currentPos.y != clickPos.y)
+					{
+						mode = Mode::Select;
+					}
+				}
+			}
+
+			if (focusPane == this && mode == Mode::Select && clickEvent)
+			{
+				mode = Mode::Insert;
+			}
+
+			if (focusPane == this && mode == Mode::Insert)
 			{
 				if (str.length() == 0)
 				{
@@ -200,6 +218,11 @@ void Pane::drawFunction(agl::RenderWindow &window)
 				}
 				else
 				{
+					if (textCursorIndex < -1)
+					{
+						textCursorIndex = -1;
+					}
+
 					str.insert(textCursorIndex + 1, keybuffer);
 				}
 
@@ -237,11 +260,6 @@ void Pane::drawFunction(agl::RenderWindow &window)
 				}
 
 				textCursorIndex += length;
-
-				if (textCursorIndex < 0)
-				{
-					textCursorIndex = 0;
-				}
 			}
 
 			// render
@@ -279,7 +297,7 @@ void Pane::drawFunction(agl::RenderWindow &window)
 				ci = drawTextExtra(window, *text, INFINITY, agl::Left, textCursorIndex);
 			}
 
-			textCursorPos	= ci.pos;
+			textCursorPos = ci.pos;
 			textCursorIndex = ci.i;
 
 			rect->setPosition(textCursorPos);

@@ -57,7 +57,7 @@ int main()
 
 	Listener mouseListener(
 		[&]() {
-			Pane::clickPos	 = event.getPointerRootPosition();
+			Pane::clickPos	 = event.getPointerWindowPosition();
 			Pane::clickEvent = true;
 		},
 		[&]() { Pane::clickEvent = false; }, [&]() { Pane::clickEvent = false; });
@@ -120,7 +120,7 @@ int main()
 
 		mouseListener.update(event.isPointerButtonPressed(Button1Mask));
 
-		Pane::currentPos = event.getPointerRootPosition();
+		Pane::currentPos = event.getPointerWindowPosition();
 		Pane::leftDown = event.isPointerButtonPressed(Button1Mask);
 
 		agl::Vec<int, 2> windowSize;

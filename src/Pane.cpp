@@ -66,9 +66,9 @@ CursorInfo drawTextExtra(agl::RenderWindow &window, agl::Text &text, float width
 
 		pen.x += glyph->advance * text.getScale();
 
-		if (clickPos.y > pen.y + text.getPosition().y)
+		if (clickPos.y > (pen.y + text.getPosition().y))
 		{
-			if (clickPos.x > pen.x + text.getPosition().x)
+			if (clickPos.x > (pen.x + text.getPosition().x - (shape->getSize().x / 2)))
 			{
 				cursorInfo.pos = pen + text.getPosition();
 				cursorInfo.i   = i;
@@ -196,12 +196,9 @@ void Pane::drawFunction(agl::RenderWindow &window)
 
 			if (focusPane == this && mode == Mode::Insert && leftDown)
 			{
-				if (currentPos.x != clickPos.x)
+				if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
 				{
-					if (currentPos.y != clickPos.y)
-					{
-						mode = Mode::Select;
-					}
+					mode = Mode::Select;
 				}
 			}
 
@@ -210,7 +207,7 @@ void Pane::drawFunction(agl::RenderWindow &window)
 				mode = Mode::Insert;
 			}
 
-			if (focusPane == this && mode == Mode::Insert)
+			if (focusPane == this)
 			{
 				if (str.length() == 0)
 				{
@@ -218,12 +215,27 @@ void Pane::drawFunction(agl::RenderWindow &window)
 				}
 				else
 				{
-					if (textCursorIndex < -1)
+					if (mode == Mode::Insert)
 					{
-						textCursorIndex = -1;
-					}
+						if (textCursorIndex < -1)
+						{
+							textCursorIndex = -1;
+						}
 
-					str.insert(textCursorIndex + 1, keybuffer);
+						str.insert(textCursorIndex + 1, keybuffer);
+					}
+					else if (keybuffer != "")
+					{
+						if (keybuffer[0] == 127 || keybuffer[0] == 8)
+						{
+							keybuffer = keybuffer.substr(1, keybuffer.length());
+						}
+
+						str = str.substr(0, selection.start.i + 1) + keybuffer +
+							  str.substr(selection.end.i + 1, str.length() - selection.end.i + 1);
+
+						mode = Mode::Insert;
+					}
 				}
 
 				int length = 0;
@@ -288,22 +300,57 @@ void Pane::drawFunction(agl::RenderWindow &window)
 
 			CursorInfo ci;
 
-			if (clickEvent && focusPane)
+			if (mode == Mode::Insert)
 			{
-				ci = drawTextExtra(window, *text, INFINITY, agl::Left, clickPos);
+				if (clickEvent && focusPane)
+				{
+					ci = drawTextExtra(window, *text, INFINITY, agl::Left, clickPos);
+				}
+				else
+				{
+					ci = drawTextExtra(window, *text, INFINITY, agl::Left, textCursorIndex);
+				}
+
+				textCursorPos	= ci.pos;
+				textCursorIndex = ci.i;
+
+				rect->setPosition(textCursorPos);
+				rect->setSize({1, FONTSIZE});
+				rect->setColor(agl::Color::Red);
+				window.drawShape(*rect);
 			}
 			else
 			{
-				ci = drawTextExtra(window, *text, INFINITY, agl::Left, textCursorIndex);
+				if (focusPane)
+				{
+					ci = drawTextExtra(window, *text, INFINITY, agl::Left, currentPos);
+
+					if (leftDown)
+					{
+						selection.start = {textCursorPos, textCursorIndex};
+
+						if (ci.i < selection.start.i)
+						{
+							selection.end	= selection.start;
+							selection.start = ci;
+						}
+						else
+						{
+							selection.end = ci;
+						}
+					}
+
+					rect->setPosition(selection.start.pos);
+					rect->setSize({1, FONTSIZE});
+					rect->setColor(agl::Color::Red);
+					window.drawShape(*rect);
+
+					rect->setPosition(selection.end.pos);
+					rect->setSize({1, FONTSIZE});
+					rect->setColor(agl::Color::Blue);
+					window.drawShape(*rect);
+				}
 			}
-
-			textCursorPos = ci.pos;
-			textCursorIndex = ci.i;
-
-			rect->setPosition(textCursorPos);
-			rect->setSize({1, FONTSIZE});
-			rect->setColor(agl::Color::Red);
-			window.drawShape(*rect);
 
 			break;
 	}

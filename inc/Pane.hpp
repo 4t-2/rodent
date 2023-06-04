@@ -45,8 +45,8 @@ class Pane : public agl::Drawable
 
 		struct
 		{
-				int startIndex;
-				int endIndex;
+				CursorInfo start;
+				CursorInfo end;
 		} selection;
 
 		static Pane			   *focusPane;

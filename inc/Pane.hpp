@@ -6,6 +6,11 @@
 
 #define DARKG      \
 	{              \
+		15, 15, 15 \
+	}
+
+#define LIGHTERG   \
+	{              \
 		63, 63, 63 \
 	}
 
@@ -26,6 +31,7 @@ enum Mode
 {
 	Insert,
 	Select,
+	Empty,
 };
 
 class Pane : public agl::Drawable
@@ -80,6 +86,12 @@ class Pane : public agl::Drawable
 
 			return;
 		}
+
+		void drawVerticalSplit(agl::RenderWindow &window);
+		void drawHorizontalSplit(agl::RenderWindow &window);
+		void drawRoot(agl::RenderWindow &window);
+
+		void processLogic();
 
 		void drawFunction(agl::RenderWindow &window) override;
 

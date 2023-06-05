@@ -148,83 +148,90 @@ CursorInfo drawTextExtra(agl::RenderWindow &window, agl::Text &text, float width
 	return cursorInfo;
 }
 
-void Pane::drawFunction(agl::RenderWindow &window)
+void Pane::drawVerticalSplit(agl::RenderWindow &window)
 {
-	switch (split)
+	Achild->pos	   = pos;
+	Achild->size.y = size.y * percent;
+	Achild->size.x = size.x;
+
+	Bchild->pos = pos;
+	Bchild->pos.y += Achild->size.y;
+	Bchild->size.y = size.y * (1.0 - percent);
+	Bchild->size.x = size.x;
+
+	window.draw(*Achild);
+	window.draw(*Bchild);
+}
+
+void Pane::drawHorizontalSplit(agl::RenderWindow &window)
+{
+	Achild->pos	   = pos;
+	Achild->size.x = size.x * percent;
+	Achild->size.y = size.y;
+
+	Bchild->pos = pos;
+	Bchild->pos.x += Achild->size.x;
+	Bchild->size.x = size.x * (1.0 - percent);
+	Bchild->size.y = size.y;
+
+	window.draw(*Achild);
+	window.draw(*Bchild);
+}
+
+void Pane::processLogic()
+{
+	if (clickEvent)
 	{
-		case Split::Vertical:
-			Achild->pos	   = pos;
-			Achild->size.y = size.y * percent;
-			Achild->size.x = size.x;
-
-			Bchild->pos = pos;
-			Bchild->pos.y += Achild->size.y;
-			Bchild->size.y = size.y * (1.0 - percent);
-			Bchild->size.x = size.x;
-
-			window.draw(*Achild);
-			window.draw(*Bchild);
-
-			break;
-		case Split::Horizontal:
-			Achild->pos	   = pos;
-			Achild->size.x = size.x * percent;
-			Achild->size.y = size.y;
-
-			Bchild->pos = pos;
-			Bchild->pos.x += Achild->size.x;
-			Bchild->size.x = size.x * (1.0 - percent);
-			Bchild->size.y = size.y;
-
-			window.draw(*Achild);
-			window.draw(*Bchild);
-
-			break;
-		case Split::Root:
-			// logic
-
-			if (clickEvent)
+		if (clickPos.x > pos.x && clickPos.y > pos.y)
+		{
+			if (clickPos.x < (pos.x + size.x) && clickPos.y < (pos.y + size.y))
 			{
-				if (clickPos.x > pos.x && clickPos.y > pos.y)
-				{
-					if (clickPos.x < (pos.x + size.x) && clickPos.y < (pos.y + size.y))
+				focusPane = this;
+			}
+		}
+	}
+
+	if (focusPane == this && clickEvent)
+	{
+		mode = Mode::Insert;
+	}
+
+	if (focusPane == this && leftDown && mode != Mode::Select)
+	{
+		if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
+		{
+			selection.start = CursorInfo();
+			selection.end	= CursorInfo();
+
+			mode = Mode::Select;
+		}
+	}
+
+	if (focusPane != this)
+	{
+		mode = Mode::Empty;
+	}
+
+	if (focusPane == this)
+	{
+		if (str.length() == 0)
+		{
+			str += keybuffer;
+		}
+		else
+		{
+			switch (mode)
+			{
+				case Mode::Insert:
+					if (textCursorIndex < -1)
 					{
-						focusPane = this;
+						textCursorIndex = -1;
 					}
-				}
-			}
 
-			if (focusPane == this && mode == Mode::Insert && leftDown)
-			{
-				if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
-				{
-					mode = Mode::Select;
-				}
-			}
-
-			if (focusPane == this && mode == Mode::Select && clickEvent)
-			{
-				mode = Mode::Insert;
-			}
-
-			if (focusPane == this)
-			{
-				if (str.length() == 0)
-				{
-					str += keybuffer;
-				}
-				else
-				{
-					if (mode == Mode::Insert)
-					{
-						if (textCursorIndex < -1)
-						{
-							textCursorIndex = -1;
-						}
-
-						str.insert(textCursorIndex + 1, keybuffer);
-					}
-					else if (keybuffer != "")
+					str.insert(textCursorIndex + 1, keybuffer);
+					break;
+				case Mode::Select:
+					if (keybuffer != "")
 					{
 						if (keybuffer[0] == 127 || keybuffer[0] == 8)
 						{
@@ -234,123 +241,187 @@ void Pane::drawFunction(agl::RenderWindow &window)
 						str = str.substr(0, selection.start.i + 1) + keybuffer +
 							  str.substr(selection.end.i + 1, str.length() - selection.end.i + 1);
 
+						textCursorIndex = selection.start.i;
+
 						mode = Mode::Insert;
 					}
-				}
-
-				int length = 0;
-
-				for (char &c : keybuffer)
-				{
-					if (c == 127 || c == 8)
-					{
-						length--;
-					}
-					else
-					{
-						length++;
-					}
-				}
-
-				while (str[0] == 127 || str[0] == 8)
-				{
-					str.erase(0, 1);
-				}
-
-				for (int i = 1; i < str.length(); i++)
-				{
-					if (str[i] == 13)
-					{
-						str[i] = 10;
-					}
-
-					if (str[i] == 127 || str[i] == 8)
-					{
-						str.erase(i - 1, 2);
-						i--;
-					}
-				}
-
-				textCursorIndex += length;
+					break;
+				case Mode::Empty:
+					break;
 			}
+		}
 
-			// render
-			rect->setSize(size);
-			rect->setPosition(pos);
-			rect->setColor(agl::Color::Gray);
-			window.drawShape(*rect);
+		int length = 0;
 
-			rect->setSize(size - agl::Vec<int, 2>{BORDER + BORDER, BORDER + BORDER});
-			rect->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER});
-
-			if (focusPane == this)
+		for (char &c : keybuffer)
+		{
+			if (c == 8)
 			{
-				rect->setColor(DARKG);
+				length--;
+			}
+			else if (c == 127)
+			{
 			}
 			else
 			{
-				rect->setColor(agl::Color::Black);
+				length++;
+			}
+		}
+
+		while (str[0] == 127 || str[0] == 8)
+		{
+			str.erase(0, 1);
+		}
+
+		for (int i = 1; i < str.length(); i++)
+		{
+			if (str[i] == 13)
+			{
+				str[i] = 10;
+			}
+			else if (str[i] == 8)
+			{
+				str.erase(i - 1, 2);
+				i -= 2;
+			}
+			else if (str[i] == 127)
+			{
+				str.erase(i, 2);
+				i--;
+			}
+		}
+
+		textCursorIndex += length;
+	}
+}
+
+void Pane::drawRoot(agl::RenderWindow &window)
+{
+	// draw pane body
+
+	rect->setSize(size);
+	rect->setPosition(pos);
+	rect->setColor(agl::Color::Gray);
+	window.drawShape(*rect);
+
+	rect->setSize(size - agl::Vec<int, 2>{BORDER + BORDER, BORDER + BORDER});
+	rect->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER});
+
+	if (focusPane == this)
+	{
+		rect->setColor(DARKG);
+	}
+	else
+	{
+		rect->setColor(agl::Color::Black);
+	}
+
+	window.drawShape(*rect);
+
+	text->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER} + agl::Vec<int, 2>{PADDING, PADDING});
+	text->clearText();
+	text->setText(str);
+
+	// draw selections / cursor & text
+
+	CursorInfo ci;
+
+	switch (mode)
+	{
+		case Mode::Insert:
+			if (clickEvent)
+			{
+				ci = drawTextExtra(window, *text, INFINITY, agl::Left, clickPos);
+			}
+			else
+			{
+				ci = drawTextExtra(window, *text, INFINITY, agl::Left, textCursorIndex);
 			}
 
+			textCursorPos	= ci.pos;
+			textCursorIndex = ci.i;
+
+			rect->setPosition(textCursorPos);
+			rect->setSize({1, FONTSIZE});
+			rect->setColor(agl::Color::White);
 			window.drawShape(*rect);
 
-			text->setPosition(pos + agl::Vec<int, 2>{BORDER, BORDER} + agl::Vec<int, 2>{PADDING, PADDING});
-			text->clearText();
-			text->setText(str);
+			break;
 
-			CursorInfo ci;
+		case Mode::Select:
+			// start fill
 
-			if (mode == Mode::Insert)
+			rect->setPosition(selection.start.pos);
+
+			if (selection.start.pos.y == selection.end.pos.y)
 			{
-				if (clickEvent && focusPane)
+				rect->setSize({selection.end.pos.x - selection.start.pos.x, FONTSIZE});
+			}
+			else
+			{
+				rect->setSize({((size.x - (selection.start.pos.x - pos.x)) - BORDER) - PADDING, FONTSIZE});
+			}
+			rect->setColor(LIGHTERG);
+			window.drawShape(*rect);
+
+			if (selection.start.pos.y != selection.end.pos.y)
+			{
+				// middle fill
+				rect->setPosition({pos.x + (float)PADDING + BORDER, selection.start.pos.y + FONTSIZE});
+				rect->setSize({size.x - float(2. * (PADDING + BORDER)),
+							   selection.end.pos.y - (selection.start.pos.y + FONTSIZE)});
+				rect->setColor(LIGHTERG);
+				window.drawShape(*rect);
+
+				// end fill
+
+				rect->setPosition(selection.end.pos);
+				rect->setSize({(pos.x - selection.end.pos.x) + BORDER + PADDING, FONTSIZE});
+				rect->setColor(LIGHTERG);
+				window.drawShape(*rect);
+			}
+
+			ci = drawTextExtra(window, *text, INFINITY, agl::Left, currentPos);
+
+			if (leftDown)
+			{
+				selection.start = {textCursorPos, textCursorIndex};
+
+				if (ci.i < selection.start.i)
 				{
-					ci = drawTextExtra(window, *text, INFINITY, agl::Left, clickPos);
+					selection.end	= selection.start;
+					selection.start = ci;
 				}
 				else
 				{
-					ci = drawTextExtra(window, *text, INFINITY, agl::Left, textCursorIndex);
-				}
-
-				textCursorPos	= ci.pos;
-				textCursorIndex = ci.i;
-
-				rect->setPosition(textCursorPos);
-				rect->setSize({1, FONTSIZE});
-				rect->setColor(agl::Color::Red);
-				window.drawShape(*rect);
-			}
-			else
-			{
-				if (focusPane)
-				{
-					ci = drawTextExtra(window, *text, INFINITY, agl::Left, currentPos);
-
-					if (leftDown)
-					{
-						selection.start = {textCursorPos, textCursorIndex};
-
-						if (ci.i < selection.start.i)
-						{
-							selection.end	= selection.start;
-							selection.start = ci;
-						}
-						else
-						{
-							selection.end = ci;
-						}
-					}
-
-					rect->setPosition(selection.start.pos);
-					rect->setSize({1, FONTSIZE});
-					rect->setColor(agl::Color::Red);
-					window.drawShape(*rect);
-
-					rect->setPosition(selection.end.pos);
-					rect->setSize({1, FONTSIZE});
-					rect->setColor(agl::Color::Blue);
-					window.drawShape(*rect);
+					selection.end = ci;
 				}
 			}
+			break;
+
+		case Mode::Empty:
+			window.drawText(*text);
+
+			break;
+	}
+}
+
+void Pane::drawFunction(agl::RenderWindow &window)
+{
+	switch (split)
+	{
+		case Split::Vertical:
+			this->drawVerticalSplit(window);
+
+			break;
+		case Split::Horizontal:
+			this->drawHorizontalSplit(window);
+
+			break;
+		case Split::Root:
+
+			this->processLogic();
+			this->drawRoot(window);
 
 			break;
 	}

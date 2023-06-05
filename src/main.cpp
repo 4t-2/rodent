@@ -64,7 +64,7 @@ int main()
 
 	Pane pane(&rect, &text);
 
-	// pane.splitPane(Split::Horizontal, 0.1);
+	pane.splitPane(Split::Horizontal, 0.5);
 
 	while (!event.windowClose())
 	{

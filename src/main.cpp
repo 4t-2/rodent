@@ -3,6 +3,7 @@
 
 #include "../inc/Listener.hpp"
 #include "../inc/Pane.hpp"
+#include "../inc/Context.hpp"
 
 int main()
 {
@@ -64,6 +65,8 @@ int main()
 
 	Pane pane(&rect, &text);
 
+	Context context(&rect, &text, &event, &Pane::keybuffer);
+
 	pane.splitPane(Split::Horizontal, 0.5);
 
 	while (!event.windowClose())
@@ -74,6 +77,11 @@ int main()
 
 		pane.updateSize(window);
 		window.draw(pane);
+
+		Pane::ignore = context.exists;
+		Pane::keybuffer = "";
+
+		window.draw(context);
 
 		window.display();
 
@@ -92,7 +100,7 @@ int main()
 
 		if (!utf8)
 		{
-			Pane::keybuffer = event.keybuffer;
+			Pane::keybuffer += event.keybuffer;
 		}
 
 		if (event.isKeyPressed(XK_Escape))
@@ -123,6 +131,11 @@ int main()
 		Pane::currentPos = event.getPointerWindowPosition();
 		Pane::leftDown = event.isPointerButtonPressed(Button1Mask);
 
+		if(event.isPointerButtonPressed(Button3Mask))
+		{
+			context.create();
+		}
+
 		agl::Vec<int, 2> windowSize;
 		windowSize.x = window.getWindowAttributes().width;
 		windowSize.y = window.getWindowAttributes().height;
@@ -134,7 +147,7 @@ int main()
 	}
 
 	text.clearText();
-	font.deleteFont();
+	font.deleteFont();;
 	blank.deleteTexture();
 	shader.deleteProgram();
 	window.close();

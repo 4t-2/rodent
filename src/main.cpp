@@ -1,9 +1,9 @@
 #include "../lib/AGL/agl.hpp"
 #include <fstream>
 
+#include "../inc/Context.hpp"
 #include "../inc/Listener.hpp"
 #include "../inc/Pane.hpp"
-#include "../inc/Context.hpp"
 
 int main()
 {
@@ -65,7 +65,47 @@ int main()
 
 	Pane pane(&rect, &text);
 
-	Context context(&rect, &text, &event, &Pane::keybuffer);
+	Context context(&rect, &text, &event);
+
+	Atom clipboardProperty = XInternAtom(window.getDisplay(), "CLIPBOARD", False);
+	Atom utf8String		   = XInternAtom(window.getDisplay(), "UTF8_STRING", False);
+
+	context.actions[0] = {"Cut", [&]() {
+							  context.actions[1].action();
+							  context.actions[3].action();
+						  }};
+	context.actions[1] = {
+		"Copy", [&]() {
+			if (Pane::focusPane == nullptr)
+			{
+				return;
+			}
+
+			std::string selection;
+
+			selection =
+				Pane::focusPane->str.substr(Pane::focusPane->selection.start.i + 1,
+											Pane::focusPane->selection.end.i - (Pane::focusPane->selection.start.i));
+
+			std::cout << selection << '\n';
+			XSetSelectionOwner(window.getDisplay(), clipboardProperty, window.getWindow(), CurrentTime);
+			XChangeProperty(window.getDisplay(), window.getWindow(), clipboardProperty, utf8String, 8, PropModeReplace,
+							(unsigned char *)selection.c_str(), selection.length());
+		}};
+	context.actions[2] = {"Paste", [&]() {
+							  Atom			 actualType;
+							  int			 actualFormat;
+							  unsigned long	 itemCount, bytesAfter;
+							  unsigned char *data;
+							  XGetWindowProperty(window.getDisplay(), window.getWindow(), clipboardProperty, 0, 1000000,
+												 False, utf8String, &actualType, &actualFormat, &itemCount, &bytesAfter,
+												 &data);
+
+							  Pane::keybuffer += std::string((char *)data, itemCount);
+
+							  XFree(data);
+						  }};
+	context.actions[3] = {"Delete", [&]() { Pane::keybuffer += 8; }};
 
 	pane.splitPane(Split::Horizontal, 0.5);
 
@@ -77,8 +117,7 @@ int main()
 
 		pane.updateSize(window);
 		window.draw(pane);
-
-		Pane::ignore = context.exists;
+		Pane::ignore	= context.exists;
 		Pane::keybuffer = "";
 
 		window.draw(context);
@@ -129,9 +168,9 @@ int main()
 		mouseListener.update(event.isPointerButtonPressed(Button1Mask));
 
 		Pane::currentPos = event.getPointerWindowPosition();
-		Pane::leftDown = event.isPointerButtonPressed(Button1Mask);
+		Pane::leftDown	 = event.isPointerButtonPressed(Button1Mask);
 
-		if(event.isPointerButtonPressed(Button3Mask))
+		if (event.isPointerButtonPressed(Button3Mask))
 		{
 			context.create();
 		}
@@ -147,7 +186,8 @@ int main()
 	}
 
 	text.clearText();
-	font.deleteFont();;
+	font.deleteFont();
+	;
 	blank.deleteTexture();
 	shader.deleteProgram();
 	window.close();

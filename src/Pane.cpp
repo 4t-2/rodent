@@ -382,10 +382,10 @@ void Pane::drawRoot(agl::RenderWindow &window)
 				window.drawShape(*rect);
 			}
 
-			ci = drawTextExtra(window, *text, INFINITY, agl::Left, currentPos);
-
 			if (leftDown && !ignore)
 			{
+				ci = drawTextExtra(window, *text, INFINITY, agl::Left, currentPos);
+
 				selection.start = {textCursorPos, textCursorIndex};
 
 				if (ci.i < selection.start.i)
@@ -397,6 +397,10 @@ void Pane::drawRoot(agl::RenderWindow &window)
 				{
 					selection.end = ci;
 				}
+			}
+			else
+			{
+				window.drawText(*text);
 			}
 			break;
 

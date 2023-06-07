@@ -1,17 +1,35 @@
 #include "../lib/AGL/agl.hpp"
+#include <functional>
 
 #define BACK       \
 	{              \
 		31, 31, 31 \
 	}
 
+#define CONTEXTACTIONS 4
+
+class ContextAction
+{
+	public:
+		std::string			  label = "";
+		std::function<void()> action;
+
+		ContextAction()
+		{
+		}
+
+		ContextAction(std::string label, std::function<void()> action) : label(label), action(action)
+		{
+		}
+};
+
 class Context : public agl::Drawable
 {
 	public:
-		agl::Rectangle	*rect = nullptr;
-		agl::Vec<int, 2> size = {200, 100};
-		agl::Vec<int, 2> pos  = {0, 0};
-		std::string		 str  = "Cut\nCopy\nPaste\nDelete";
+		agl::Rectangle	*rect  = nullptr;
+		float			 width = 200;
+		agl::Vec<int, 2> pos   = {0, 0};
+		ContextAction	 actions[CONTEXTACTIONS];
 		agl::Event		*event;
 		agl::Text		*text;
 
@@ -19,9 +37,7 @@ class Context : public agl::Drawable
 		bool leftDown = false;
 		bool rising	  = false;
 
-		std::string *keyBuffer;
-
-		Context(agl::Rectangle *rect, agl::Text *text, agl::Event *event, std::string *keyBuffer) : rect(rect), text(text), event(event), keyBuffer(keyBuffer)
+		Context(agl::Rectangle *rect, agl::Text *text, agl::Event *event) : rect(rect), text(text), event(event)
 		{
 		}
 

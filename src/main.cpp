@@ -4,6 +4,7 @@
 #include "../inc/Context.hpp"
 #include "../inc/Listener.hpp"
 #include "../inc/Pane.hpp"
+#include "../inc/ActionWheel.hpp"
 
 int main()
 {
@@ -107,6 +108,33 @@ int main()
 						  }};
 	context.actions[3] = {"Delete", [&]() { Pane::keybuffer += 8; }};
 
+	agl::Circle circle(32);
+	circle.setTexture(&blank);
+
+	agl::Shape line([](agl::Shape &shape) {
+		float vertexBufferData[6];
+		float UVBufferData[4];
+
+		vertexBufferData[0] = 0;
+		vertexBufferData[1] = 0;
+		vertexBufferData[2] = 0;
+		vertexBufferData[3] = 1;
+		vertexBufferData[4] = 1;
+		vertexBufferData[5] = 0;
+
+		UVBufferData[0] = vertexBufferData[0];
+		UVBufferData[1] = vertexBufferData[1];
+		UVBufferData[2] = vertexBufferData[3];
+		UVBufferData[3] = vertexBufferData[4];
+
+		shape.genBuffers();
+		shape.setMode(GL_LINES);
+		shape.setBufferData(vertexBufferData, UVBufferData, 2);
+	});
+	line.setTexture(&blank);
+
+	ActionWheel actionWheel(&circle, &text, &line);
+
 	pane.splitPane(Split::Horizontal, 0.5);
 
 	while (!event.windowClose())
@@ -116,11 +144,16 @@ int main()
 		window.clear();
 
 		pane.updateSize(window);
+		actionWheel.center.x= window.getWindowAttributes().width / 2;
+		actionWheel.center.y= window.getWindowAttributes().height / 2;
+
 		window.draw(pane);
+
 		Pane::ignore	= context.exists;
 		Pane::keybuffer = "";
 
 		window.draw(context);
+		window.draw(actionWheel);
 
 		window.display();
 
@@ -135,6 +168,13 @@ int main()
 				utf8 = true;
 				break;
 			}
+		}
+
+		if(event.isKeyPressed(XK_Left))
+		{
+			actionWheel.exist = true;
+		} else {
+			actionWheel.exist = false;
 		}
 
 		if (!utf8)

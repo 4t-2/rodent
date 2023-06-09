@@ -57,12 +57,17 @@ int main()
 	agl::Rectangle rect;
 	rect.setTexture(&blank);
 
+	agl::Vec<int, 2> clickPos;
+	agl::Vec<int, 2> currentPos;
+	bool clickEvent;
+	bool leftDown;
+
 	Listener mouseListener(
 		[&]() {
-			Pane::clickPos	 = event.getPointerWindowPosition();
-			Pane::clickEvent = true;
+			clickPos	 = event.getPointerWindowPosition();
+			clickEvent = true;
 		},
-		[&]() { Pane::clickEvent = false; }, [&]() { Pane::clickEvent = false; });
+		[&]() { clickEvent = false; }, [&]() { clickEvent = false; });
 
 	Pane pane(&rect, &text);
 
@@ -134,6 +139,13 @@ int main()
 	line.setTexture(&blank);
 
 	ActionWheel actionWheel(&circle, &text, &line);
+	actionWheel.action[0].label = "aaa";
+	actionWheel.action[1].label = "bbb";
+	actionWheel.action[2].label = "ccc";
+	actionWheel.action[3].label = "ddd";
+	actionWheel.action[4].label = "eee";
+	actionWheel.action[5].label = "fff";
+	// actionWheel.action[6].label = "ggg";
 
 	pane.splitPane(Split::Horizontal, 0.5);
 
@@ -149,7 +161,6 @@ int main()
 
 		window.draw(pane);
 
-		Pane::ignore	= context.exists;
 		Pane::keybuffer = "";
 
 		window.draw(context);
@@ -172,6 +183,7 @@ int main()
 
 		if(event.isKeyPressed(XK_Left))
 		{
+			actionWheel.open();
 			actionWheel.exist = true;
 		} else {
 			actionWheel.exist = false;
@@ -207,12 +219,22 @@ int main()
 
 		mouseListener.update(event.isPointerButtonPressed(Button1Mask));
 
-		Pane::currentPos = event.getPointerWindowPosition();
-		Pane::leftDown	 = event.isPointerButtonPressed(Button1Mask);
+		currentPos = event.getPointerWindowPosition();
+		leftDown	 = event.isPointerButtonPressed(Button1Mask);
 
 		if (event.isPointerButtonPressed(Button3Mask))
 		{
 			context.create();
+		}
+
+		context.leftDown = leftDown;
+
+		if(!context.exists)
+		{
+			Pane::clickPos = clickPos;
+			Pane::clickEvent = clickEvent;
+			Pane::currentPos = currentPos;
+			Pane::leftDown = leftDown;
 		}
 
 		agl::Vec<int, 2> windowSize;

@@ -61,7 +61,6 @@ class Pane : public agl::Drawable
 		static agl::Vec<int, 2> clickPos;
 		static agl::Vec<int, 2> currentPos;
 		static bool				leftDown;
-		static bool				ignore;
 
 		Mode mode = Mode::Insert;
 

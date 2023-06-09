@@ -17,8 +17,6 @@ void Context::drawFunction(agl::RenderWindow &window)
 {
 	if (exists)
 	{
-		leftDown = event->isPointerButtonPressed(Button1Mask);
-
 		if (leftDown)
 		{
 			exists = false;

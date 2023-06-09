@@ -6,7 +6,6 @@ std::string		 Pane::keybuffer  = "";
 agl::Vec<int, 2> Pane::clickPos	  = {0, 0};
 agl::Vec<int, 2> Pane::currentPos = {0, 0};
 bool			 Pane::leftDown	  = false;
-bool			 Pane::ignore	  = false;
 
 CursorInfo drawTextExtra(agl::RenderWindow &window, agl::Text &text, float width, agl::TextAlign align,
 						 agl::Vec<float, 2> clickPos)
@@ -192,21 +191,21 @@ void Pane::processLogic()
 		}
 	}
 
-	if (focusPane == this && clickEvent & !ignore)
+	if (focusPane == this && clickEvent)
 	{
 		mode = Mode::Insert;
 	}
 
-	if (focusPane == this && leftDown && mode != Mode::Select && !ignore)
-	{
-		if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
-		{
-			selection.start = CursorInfo();
-			selection.end	= CursorInfo();
-
-			mode = Mode::Select;
-		}
-	}
+	// if (focusPane == this && leftDown && mode != Mode::Select)
+	// {
+	// 	if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
+	// 	{
+	// 		selection.start = CursorInfo();
+	// 		selection.end	= CursorInfo();
+	//
+	// 		mode = Mode::Select;
+	// 	}
+	// }
 
 	if (focusPane != this)
 	{
@@ -330,7 +329,7 @@ void Pane::drawRoot(agl::RenderWindow &window)
 	switch (mode)
 	{
 		case Mode::Insert:
-			if (clickEvent && !ignore)
+			if (clickEvent)
 			{
 				ci = drawTextExtra(window, *text, INFINITY, agl::Left, clickPos);
 			}
@@ -382,7 +381,7 @@ void Pane::drawRoot(agl::RenderWindow &window)
 				window.drawShape(*rect);
 			}
 
-			if (leftDown && !ignore)
+			if (leftDown)
 			{
 				ci = drawTextExtra(window, *text, INFINITY, agl::Left, currentPos);
 

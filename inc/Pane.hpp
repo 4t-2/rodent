@@ -66,6 +66,7 @@ class Pane : public agl::Drawable
 
 		Pane(agl::Rectangle *rect, agl::Text *text) : rect(rect), text(text)
 		{
+			Pane::focusPane = this;
 		}
 
 		void splitPane(Split type, float percent)

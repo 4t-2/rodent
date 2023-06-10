@@ -1,7 +1,6 @@
 #include "../lib/AGL/agl.hpp"
 
-#define ACTIONS 6
-#define RADIUS	300
+#define RADIUS 300
 
 #define DBLUE      \
 	{              \
@@ -13,7 +12,8 @@
 		31, 31, 31, \
 	}
 
-void drawTextRot(agl::RenderWindow &window, agl::Text &text, float width, agl::TextAlign align, float rotation)
+void drawTextRot(agl::RenderWindow &window, agl::Text &text, float width, agl::TextAlign align,
+				 agl::Vec<float, 2> offset, float rotation)
 {
 	agl::Rectangle *shape = text.getCharBox();
 
@@ -50,7 +50,7 @@ void drawTextRot(agl::RenderWindow &window, agl::Text &text, float width, agl::T
 		shape->setRotation({0, 0, -rotation});
 		shape->setSize(shapeSize);
 		shape->setPosition(spacePos);
-		shape->setOffset(shapePosition);
+		shape->setOffset(shapePosition + offset);
 		shape->setTextureScaling(glyph->scale);
 		shape->setTextureTranslation(glyph->position);
 
@@ -67,6 +67,24 @@ class Action
 		std::function<void()> action;
 };
 
+class ActionGroup
+{
+	public:
+		Action *action;
+		int		total;
+
+		void setup(int total)
+		{
+			action		= new Action[total];
+			this->total = total;
+		}
+
+		~ActionGroup()
+		{
+			delete[] action;
+		}
+};
+
 class ActionWheel : public agl::Drawable
 {
 	public:
@@ -74,11 +92,93 @@ class ActionWheel : public agl::Drawable
 		agl::Text		*text	= nullptr;
 		agl::Shape		*line	= nullptr;
 		agl::Vec<int, 2> center;
-		Action			 action[ACTIONS];
+		ActionGroup		*actionGroup;
 
-		bool exist = false;
+		bool		 exist		  = false;
+		ActionGroup *currentGroup = nullptr;
 
-		std::function<void(agl::RenderWindow &window)> rootDraw = [&](agl::RenderWindow &window) {
+		bool			 clickEvent;
+		agl::Vec<int, 2> clickPos;
+
+		ActionWheel(agl::Circle *circle, agl::Text *text, agl::Shape *line, int actionGroups)
+			: circle(circle), text(text), line(line)
+		{
+			actionGroup = new ActionGroup[actionGroups];
+		}
+
+		void open()
+		{
+			exist		 = true;
+			currentGroup = &actionGroup[0];
+		}
+
+		void drawGroup(agl::RenderWindow &window, ActionGroup &group)
+		{
+			for (int i = 0; i < group.total; i++)
+			{
+				float rotation = (360 / (float)group.total) * i;
+
+				line->setSize({0, RADIUS});
+				line->setPosition(center);
+				line->setRotation({0, 0, rotation});
+				line->setColor(DGRAY);
+
+				glLineWidth(3);
+
+				window.drawShape(*line);
+
+				glLineWidth(1);
+
+				text->setColor(agl::Color::White);
+				text->clearText();
+				text->setText(group.action[i].label);
+				text->setPosition(center);
+
+				if (group.total % 2 == 0)
+				{
+					rotation += (360 / (float)group.total) / 2;
+				}
+
+				if (clickEvent)
+				{
+					float clickRotation = agl::radianToDegree(agl::Vec<float, 2>(clickPos - center).angle());
+					float half			= (360 / (float)group.total) / 2;
+
+					float lower = rotation - half;
+					float upper = rotation + half;
+
+					if(lower < 0 && clickRotation > upper)
+					{
+						lower += 360;
+						upper = 360;
+					}
+
+					if(group.action[i].label == "split")
+					{
+						std::cout << '\n';
+						std::cout << lower << '\n';
+						std::cout << clickRotation << '\n';
+					}
+
+					if (clickRotation > lower && clickRotation < upper)
+					{
+						group.action[i].action();
+					}
+				}
+
+				if (rotation <= 180)
+				{
+					drawTextRot(window, *text, 200, agl::Right, {50, 0}, rotation - 90);
+				}
+				else
+				{
+					drawTextRot(window, *text, 200, agl::Left, {-250, 0}, rotation + 90);
+				}
+			}
+		}
+
+		void drawFunction(agl::RenderWindow &window) override
+		{
 			if (!exist)
 			{
 				return;
@@ -90,85 +190,11 @@ class ActionWheel : public agl::Drawable
 
 			window.drawShape(*circle);
 
-			// this is bad code
-			// i might fix it
-			// probably not
-
-			for (int i = 0; i < ACTIONS; i++)
-			{
-				line->setSize({0, RADIUS});
-				line->setPosition(center);
-				line->setRotation({0, 0, (360 / (float)ACTIONS) * i});
-				line->setColor(DGRAY);
-
-				glLineWidth(3);
-
-				window.drawShape(*line);
-
-				text->setColor(agl::Color::White);
-				text->clearText();
-				text->setText(action[i].label);
-
-				agl::Vec<float, 2> pos;
-
-				if (ACTIONS % 2 == 0)
-				{
-					pos = agl::pointOnCircle(((PI * 2 / (float)ACTIONS) * (float)i) - ((PI * 2 / (float)ACTIONS)));
-				}
-				else
-				{
-					pos = agl::pointOnCircle(((PI * 2 / (float)ACTIONS) * (float)i) - PI / 2);
-				}
-
-				pos *= 50;
-				text->setPosition(center + pos);
-
-				float offset;
-
-				if (ACTIONS % 2 == 0)
-				{
-					offset = (360. / ACTIONS);
-				}
-				else
-				{
-					offset = 90;
-				}
-
-				drawTextRot(window, *text, 200, agl::Left, (360 / ((float)ACTIONS) * i) - offset);
-
-				// if (i <= (ACTIONS / 2))
-				// {
-				// 	pos *= 50;
-				// 	text->setPosition(center);
-				//
-				// 	drawTextRot(window, *text, 200, agl::Left, (360 /
-				// ((float)ACTIONS) * i) - offset);
-				// }
-				// else
-				// {
-				// 	pos *= 250;
-				// 	text->setPosition(center);
-				//
-				// 	drawTextRot(window, *text, 200, agl::Right, ((360 /
-				// ((float)ACTIONS) * i) + offset));
-				// }
-			}
-			glLineWidth(1);
-		};
-
-		std::function<void(agl::RenderWindow &window)> currentDraw;
-
-		ActionWheel(agl::Circle *circle, agl::Text *text, agl::Shape *line) : circle(circle), text(text), line(line)
-		{
+			drawGroup(window, *currentGroup);
 		}
 
-		void open()
+		~ActionWheel()
 		{
-			currentDraw = rootDraw;
-		}
-
-		void drawFunction(agl::RenderWindow &window) override
-		{
-			rootDraw(window);
+			delete[] actionGroup;
 		}
 };

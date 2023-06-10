@@ -1,10 +1,10 @@
 #include "../lib/AGL/agl.hpp"
 #include <fstream>
 
+#include "../inc/ActionWheel.hpp"
 #include "../inc/Context.hpp"
 #include "../inc/Listener.hpp"
 #include "../inc/Pane.hpp"
-#include "../inc/ActionWheel.hpp"
 
 int main()
 {
@@ -59,12 +59,12 @@ int main()
 
 	agl::Vec<int, 2> clickPos;
 	agl::Vec<int, 2> currentPos;
-	bool clickEvent;
-	bool leftDown;
+	bool			 clickEvent;
+	bool			 leftDown;
 
 	Listener mouseListener(
 		[&]() {
-			clickPos	 = event.getPointerWindowPosition();
+			clickPos   = event.getPointerWindowPosition();
 			clickEvent = true;
 		},
 		[&]() { clickEvent = false; }, [&]() { clickEvent = false; });
@@ -138,16 +138,15 @@ int main()
 	});
 	line.setTexture(&blank);
 
-	ActionWheel actionWheel(&circle, &text, &line);
-	actionWheel.action[0].label = "aaa";
-	actionWheel.action[1].label = "bbb";
-	actionWheel.action[2].label = "ccc";
-	actionWheel.action[3].label = "ddd";
-	actionWheel.action[4].label = "eee";
-	actionWheel.action[5].label = "fff";
-	// actionWheel.action[6].label = "ggg";
+	ActionWheel mainWheel(&circle, &text, &line, 2);
+	mainWheel.actionGroup[0].setup(3);
+	mainWheel.actionGroup[0].action[0] = {"split", [&]() { mainWheel.currentGroup = &mainWheel.actionGroup[1]; }};
+	mainWheel.actionGroup[0].action[1] = {"open", [&]() {}};
+	mainWheel.actionGroup[0].action[2] = {"nothing to see", [&]() {}};
 
-	pane.splitPane(Split::Horizontal, 0.5);
+	mainWheel.actionGroup[1].setup(2);
+	mainWheel.actionGroup[1].action[0] = {"Horizontal", [&]() { Pane::focusPane->splitPane(Split::Horizontal, .5); }};
+	mainWheel.actionGroup[1].action[1] = {"Vertical", [&]() { Pane::focusPane->splitPane(Split::Vertical, .5); }};
 
 	while (!event.windowClose())
 	{
@@ -156,15 +155,15 @@ int main()
 		window.clear();
 
 		pane.updateSize(window);
-		actionWheel.center.x= window.getWindowAttributes().width / 2;
-		actionWheel.center.y= window.getWindowAttributes().height / 2;
+		mainWheel.center.x = window.getWindowAttributes().width / 2;
+		mainWheel.center.y = window.getWindowAttributes().height / 2;
 
 		window.draw(pane);
 
 		Pane::keybuffer = "";
 
 		window.draw(context);
-		window.draw(actionWheel);
+		window.draw(mainWheel);
 
 		window.display();
 
@@ -181,12 +180,16 @@ int main()
 			}
 		}
 
-		if(event.isKeyPressed(XK_Left))
+		if (event.isPointerButtonPressed(Button2Mask))
 		{
-			actionWheel.open();
-			actionWheel.exist = true;
-		} else {
-			actionWheel.exist = false;
+			if (mainWheel.exist == false)
+			{
+				mainWheel.open();
+			}
+		}
+		else
+		{
+			mainWheel.exist = false;
 		}
 
 		if (!utf8)
@@ -220,7 +223,7 @@ int main()
 		mouseListener.update(event.isPointerButtonPressed(Button1Mask));
 
 		currentPos = event.getPointerWindowPosition();
-		leftDown	 = event.isPointerButtonPressed(Button1Mask);
+		leftDown   = event.isPointerButtonPressed(Button1Mask);
 
 		if (event.isPointerButtonPressed(Button3Mask))
 		{
@@ -229,13 +232,16 @@ int main()
 
 		context.leftDown = leftDown;
 
-		if(!context.exists)
+		if (!context.exists && !mainWheel.exist)
 		{
-			Pane::clickPos = clickPos;
+			Pane::clickPos	 = clickPos;
 			Pane::clickEvent = clickEvent;
 			Pane::currentPos = currentPos;
-			Pane::leftDown = leftDown;
+			Pane::leftDown	 = leftDown;
 		}
+
+		mainWheel.clickEvent = clickEvent;
+		mainWheel.clickPos	 = clickPos;
 
 		agl::Vec<int, 2> windowSize;
 		windowSize.x = window.getWindowAttributes().width;

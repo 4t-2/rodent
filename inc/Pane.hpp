@@ -44,6 +44,7 @@ class Pane : public agl::Drawable
 		float			   percent; // 1.0 means Bchild covered, 0.0 Achild covered
 		Pane			  *Achild = nullptr;
 		Pane			  *Bchild = nullptr;
+		Pane			  *parent = nullptr;
 		agl::Text		  *text	  = nullptr;
 		std::string		   str	  = "";
 		agl::Vec<float, 2> textCursorPos;
@@ -64,20 +65,55 @@ class Pane : public agl::Drawable
 
 		Mode mode = Mode::Insert;
 
-		Pane(agl::Rectangle *rect, agl::Text *text) : rect(rect), text(text)
+		Pane(agl::Rectangle *rect, agl::Text *text, Pane *parent) : rect(rect), text(text), parent(parent)
 		{
 			Pane::focusPane = this;
 		}
 
 		void splitPane(Split type, float percent)
 		{
-			Achild = new Pane(rect, text);
-			Bchild = new Pane(rect, text);
+			Achild = new Pane(rect, text, this);
+			Bchild = new Pane(rect, text, this);
 
 			split		  = type;
 			this->percent = percent;
 
+			// yes i know this is bad
+			// no i dont care
+
+			Achild->str = str;
+			str			= "";
+
 			return;
+		}
+
+		static void closePane(Pane *pane)
+		{
+			if (pane->parent == nullptr)
+			{
+				return;
+			}
+
+			pane->parent->split = Split::Root;
+
+			if (pane->parent->Achild == pane)
+			{
+				pane->parent->str = pane->parent->Bchild->str;
+			}
+			else
+			{
+				pane->parent->str = pane->parent->Achild->str;
+			}
+
+			Pane *p = pane->parent->Achild;
+
+			delete p;
+			// pane->parent->Achild = nullptr;
+
+			p = pane->parent->Bchild;
+
+			delete p;
+			// pane->parent->Bchild = nullptr;
 		}
 
 		void updateSize(agl::RenderWindow &window)

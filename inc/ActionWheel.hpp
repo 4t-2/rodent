@@ -60,11 +60,13 @@ void drawTextRot(agl::RenderWindow &window, agl::Text &text, float width, agl::T
 	}
 }
 
+class ActionWheel;
+
 class Action
 {
 	public:
 		std::string			  label;
-		std::function<void()> action;
+		std::function<void(ActionWheel *actionWheel)> action;
 };
 
 class ActionGroup
@@ -73,10 +75,9 @@ class ActionGroup
 		Action *action;
 		int		total;
 
-		void setup(int total)
+		ActionGroup(int total) : total(total)
 		{
 			action		= new Action[total];
-			this->total = total;
 		}
 
 		~ActionGroup()
@@ -92,7 +93,6 @@ class ActionWheel : public agl::Drawable
 		agl::Text		*text	= nullptr;
 		agl::Shape		*line	= nullptr;
 		agl::Vec<int, 2> center;
-		ActionGroup		*actionGroup;
 
 		bool		 exist		  = false;
 		ActionGroup *currentGroup = nullptr;
@@ -100,16 +100,15 @@ class ActionWheel : public agl::Drawable
 		bool			 clickEvent;
 		agl::Vec<int, 2> clickPos;
 
-		ActionWheel(agl::Circle *circle, agl::Text *text, agl::Shape *line, int actionGroups)
+		ActionWheel(agl::Circle *circle, agl::Text *text, agl::Shape *line)
 			: circle(circle), text(text), line(line)
 		{
-			actionGroup = new ActionGroup[actionGroups];
 		}
 
-		void open()
+		void open(ActionGroup *actionGroup)
 		{
 			exist		 = true;
-			currentGroup = &actionGroup[0];
+			currentGroup = actionGroup;
 		}
 
 		void drawGroup(agl::RenderWindow &window, ActionGroup &group)
@@ -162,7 +161,7 @@ class ActionWheel : public agl::Drawable
 
 					if (clickRotation > lower && clickRotation < upper)
 					{
-						group.action[i].action();
+						group.action[i].action(this);
 					}
 				}
 
@@ -191,10 +190,5 @@ class ActionWheel : public agl::Drawable
 			window.drawShape(*circle);
 
 			drawGroup(window, *currentGroup);
-		}
-
-		~ActionWheel()
-		{
-			delete[] actionGroup;
 		}
 };

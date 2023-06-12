@@ -196,16 +196,16 @@ void Pane::processLogic()
 		mode = Mode::Insert;
 	}
 
-	// if (focusPane == this && leftDown && mode != Mode::Select)
-	// {
-	// 	if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
-	// 	{
-	// 		selection.start = CursorInfo();
-	// 		selection.end	= CursorInfo();
-	//
-	// 		mode = Mode::Select;
-	// 	}
-	// }
+	if (focusPane == this && leftDown && mode != Mode::Select)
+	{
+		if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
+		{
+			selection.start = CursorInfo();
+			selection.end	= CursorInfo();
+
+			mode = Mode::Select;
+		}
+	}
 
 	if (focusPane != this)
 	{

@@ -69,7 +69,7 @@ int main()
 		},
 		[&]() { clickEvent = false; }, [&]() { clickEvent = false; });
 
-	Pane pane(&rect, &text);
+	Pane pane(&rect, &text, nullptr);
 
 	Context context(&rect, &text, &event);
 
@@ -138,15 +138,95 @@ int main()
 	});
 	line.setTexture(&blank);
 
-	ActionWheel mainWheel(&circle, &text, &line, 2);
-	mainWheel.actionGroup[0].setup(3);
-	mainWheel.actionGroup[0].action[0] = {"split", [&]() { mainWheel.currentGroup = &mainWheel.actionGroup[1]; }};
-	mainWheel.actionGroup[0].action[1] = {"open", [&]() {}};
-	mainWheel.actionGroup[0].action[2] = {"nothing to see", [&]() {}};
+	// QWERTYUIOPASDFGHJKLZXCVBNM
+	// qwertyuiopasdfghjklzxcvbnm
+	// 1234567890
 
-	mainWheel.actionGroup[1].setup(2);
-	mainWheel.actionGroup[1].action[0] = {"Horizontal", [&]() { Pane::focusPane->splitPane(Split::Horizontal, .5); }};
-	mainWheel.actionGroup[1].action[1] = {"Vertical", [&]() { Pane::focusPane->splitPane(Split::Vertical, .5); }};
+	ActionWheel mainWheel(&circle, &text, &line);
+
+	ActionGroup startGroup(6);
+	ActionGroup splitGroup(3);
+	ActionGroup upperGroup(26);
+	ActionGroup lowerGroup(26);
+	ActionGroup mathGroup(20);
+	ActionGroup seperatorGroup(12);
+	ActionGroup miscGroup(13);
+
+	startGroup.action[0] = {"Split", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &splitGroup; }};
+	startGroup.action[1] = {"Capital", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &upperGroup; }};
+	startGroup.action[2] = {"Lowercase", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &lowerGroup; }};
+	startGroup.action[3] = {"Math", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &mathGroup; }};
+	startGroup.action[4] = {"Seperators",
+							[&](ActionWheel *actionWheel) { actionWheel->currentGroup = &seperatorGroup; }};
+	startGroup.action[5] = {"Misc", [&](ActionWheel *actionWheel) {}};
+
+	splitGroup.action[0] = {"Horizontal", [&](auto) { Pane::focusPane->splitPane(Split::Horizontal, .5); }};
+	splitGroup.action[1] = {"Vertical", [&](auto) { Pane::focusPane->splitPane(Split::Vertical, .5); }};
+	splitGroup.action[2] = {"Close", [&](auto) { Pane::closePane(Pane::focusPane); }};
+
+	for (int i = 0; i < 26; i++)
+	{
+		std::string str = "A";
+		str[0] += i;
+
+		upperGroup.action[i] = {str, [=](auto) { Pane::keybuffer += str; }};
+	}
+
+	for (int i = 0; i < 26; i++)
+	{
+		std::string str = "a";
+		str[0] += i;
+
+		lowerGroup.action[i] = {str, [=](auto) { Pane::keybuffer += str; }};
+	}
+
+	mathGroup.action[0]	 = {"%", [&](auto) { Pane::keybuffer += "%"; }};
+	mathGroup.action[1]	 = {"*", [&](auto) { Pane::keybuffer += "*"; }};
+	mathGroup.action[2]	 = {"+", [&](auto) { Pane::keybuffer += "+"; }};
+	mathGroup.action[3]	 = {"-", [&](auto) { Pane::keybuffer += "-"; }};
+	mathGroup.action[4]	 = {".", [&](auto) { Pane::keybuffer += "."; }};
+	mathGroup.action[5]	 = {"/", [&](auto) { Pane::keybuffer += "/"; }};
+	mathGroup.action[6]	 = {"0", [&](auto) { Pane::keybuffer += "0"; }};
+	mathGroup.action[7]	 = {"1", [&](auto) { Pane::keybuffer += "1"; }};
+	mathGroup.action[8]	 = {"2", [&](auto) { Pane::keybuffer += "2"; }};
+	mathGroup.action[9]	 = {"3", [&](auto) { Pane::keybuffer += "3"; }};
+	mathGroup.action[10] = {"4", [&](auto) { Pane::keybuffer += "4"; }};
+	mathGroup.action[11] = {"5", [&](auto) { Pane::keybuffer += "5"; }};
+	mathGroup.action[12] = {"6", [&](auto) { Pane::keybuffer += "6"; }};
+	mathGroup.action[13] = {"7", [&](auto) { Pane::keybuffer += "7"; }};
+	mathGroup.action[14] = {"8", [&](auto) { Pane::keybuffer += "8"; }};
+	mathGroup.action[15] = {"9", [&](auto) { Pane::keybuffer += "9"; }};
+	mathGroup.action[16] = {"<", [&](auto) { Pane::keybuffer += "<"; }};
+	mathGroup.action[17] = {"=", [&](auto) { Pane::keybuffer += "="; }};
+	mathGroup.action[18] = {">", [&](auto) { Pane::keybuffer += ">"; }};
+	mathGroup.action[19] = {"^", [&](auto) { Pane::keybuffer += "^"; }};
+
+	seperatorGroup.action[0]  = {"\"", [&](auto) { Pane::keybuffer += "\""; }};
+	seperatorGroup.action[1]  = {"'", [&](auto) { Pane::keybuffer += "'"; }};
+	seperatorGroup.action[2]  = {"(", [&](auto) { Pane::keybuffer += "("; }};
+	seperatorGroup.action[3]  = {")", [&](auto) { Pane::keybuffer += ")"; }};
+	seperatorGroup.action[4]  = {",", [&](auto) { Pane::keybuffer += ","; }};
+	seperatorGroup.action[5]  = {";", [&](auto) { Pane::keybuffer += ";"; }};
+	seperatorGroup.action[6]  = {"[", [&](auto) { Pane::keybuffer += "["; }};
+	seperatorGroup.action[7]  = {"]", [&](auto) { Pane::keybuffer += "]"; }};
+	seperatorGroup.action[8]  = {"{", [&](auto) { Pane::keybuffer += "{"; }};
+	seperatorGroup.action[9]  = {"}", [&](auto) { Pane::keybuffer += "}"; }};
+	seperatorGroup.action[10] = {"Space", [&](auto) { Pane::keybuffer += " "; }};
+	seperatorGroup.action[11] = {"Return", [&](auto) { Pane::keybuffer += "\n"; }};
+
+	miscGroup.action[0]	 = {"!", [&](auto) { Pane::keybuffer += "!"; }};
+	miscGroup.action[1]	 = {"#", [&](auto) { Pane::keybuffer += "#"; }};
+	miscGroup.action[2]	 = {"$", [&](auto) { Pane::keybuffer += "$"; }};
+	miscGroup.action[3]	 = {"&", [&](auto) { Pane::keybuffer += "&"; }};
+	miscGroup.action[4]	 = {":", [&](auto) { Pane::keybuffer += ":"; }};
+	miscGroup.action[5]	 = {"?", [&](auto) { Pane::keybuffer += "?"; }};
+	miscGroup.action[6]	 = {"@", [&](auto) { Pane::keybuffer += "@"; }};
+	miscGroup.action[7]	 = {"\\", [&](auto) { Pane::keybuffer += "\\"; }};
+	miscGroup.action[8]	 = {"_", [&](auto) { Pane::keybuffer += "_"; }};
+	miscGroup.action[9]	 = {"|", [&](auto) { Pane::keybuffer += "|"; }};
+	miscGroup.action[10] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
+	miscGroup.action[11] = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};
+	miscGroup.action[12] = {"Delete", [&](auto) { Pane::keybuffer += 127; }};
 
 	while (!event.windowClose())
 	{
@@ -184,7 +264,7 @@ int main()
 		{
 			if (mainWheel.exist == false)
 			{
-				mainWheel.open();
+				mainWheel.open(&startGroup);
 			}
 		}
 		else

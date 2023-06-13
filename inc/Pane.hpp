@@ -16,9 +16,10 @@
 
 enum Split
 {
-	Vertical,
 	Horizontal,
+	Vertical,
 	Root,
+	Base,
 };
 
 struct CursorInfo
@@ -65,6 +66,15 @@ class Pane : public agl::Drawable
 
 		Mode mode = Mode::Insert;
 
+		Pane(agl::Rectangle *rect, agl::Text *text) : rect(rect), text(text)
+		{
+			Pane::focusPane = this;
+
+			split = Split::Base;
+
+			Achild = new Pane(rect, text, this);
+		}
+
 		Pane(agl::Rectangle *rect, agl::Text *text, Pane *parent) : rect(rect), text(text), parent(parent)
 		{
 			Pane::focusPane = this;
@@ -89,31 +99,41 @@ class Pane : public agl::Drawable
 
 		static void closePane(Pane *pane)
 		{
-			if (pane->parent == nullptr)
+			if (pane->parent->split == Split::Base)
 			{
 				return;
 			}
 
-			pane->parent->split = Split::Root;
+			auto snipPaneTree = [](Pane *newRoot) {
+				Pane *parent	  = newRoot->parent;
+				Pane *superParent = parent->parent;
 
-			if (pane->parent->Achild == pane)
+				newRoot->parent = superParent;
+
+				if (superParent->Achild == parent)
+				{
+					superParent->Achild = newRoot;
+				}
+				if (superParent->Bchild == parent)
+				{
+					superParent->Bchild = newRoot;
+				}
+			};
+
+			if (pane->parent->Achild == pane) // a pane
 			{
-				pane->parent->str = pane->parent->Bchild->str;
+				snipPaneTree(pane->parent->Bchild);
+				Pane::focusPane		 = pane->parent->Bchild;
+				pane->parent->Bchild = nullptr;
 			}
-			else
+			else // b pane
 			{
-				pane->parent->str = pane->parent->Achild->str;
+				snipPaneTree(pane->parent->Achild);
+				Pane::focusPane		 = pane->parent->Achild;
+				pane->parent->Achild = nullptr;
 			}
 
-			Pane *p = pane->parent->Achild;
-
-			delete p;
-			// pane->parent->Achild = nullptr;
-
-			p = pane->parent->Bchild;
-
-			delete p;
-			// pane->parent->Bchild = nullptr;
+			delete pane->parent;
 		}
 
 		void updateSize(agl::RenderWindow &window)

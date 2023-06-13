@@ -414,18 +414,23 @@ void Pane::drawFunction(agl::RenderWindow &window)
 {
 	switch (split)
 	{
-		case Split::Vertical:
+		case Split::Horizontal:
 			this->drawVerticalSplit(window);
 
 			break;
-		case Split::Horizontal:
+		case Split::Vertical:
 			this->drawHorizontalSplit(window);
 
 			break;
 		case Split::Root:
-
 			this->processLogic();
 			this->drawRoot(window);
+
+			break;
+		case Split::Base:
+			Achild->size = size;
+			Achild->pos = {0, 0};
+			Achild->drawFunction(window);
 
 			break;
 	}

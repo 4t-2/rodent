@@ -69,7 +69,7 @@ int main()
 		},
 		[&]() { clickEvent = false; }, [&]() { clickEvent = false; });
 
-	Pane pane(&rect, &text, nullptr);
+	Pane pane(&rect, &text);
 
 	Context context(&rect, &text, &event);
 
@@ -160,8 +160,8 @@ int main()
 							[&](ActionWheel *actionWheel) { actionWheel->currentGroup = &seperatorGroup; }};
 	startGroup.action[5] = {"Misc", [&](ActionWheel *actionWheel) {}};
 
-	splitGroup.action[0] = {"Horizontal", [&](auto) { Pane::focusPane->splitPane(Split::Horizontal, .5); }};
-	splitGroup.action[1] = {"Vertical", [&](auto) { Pane::focusPane->splitPane(Split::Vertical, .5); }};
+	splitGroup.action[0] = {"Vertical", [&](auto) { Pane::focusPane->splitPane(Split::Vertical, .5); }};
+	splitGroup.action[1] = {"Horizontal", [&](auto) { Pane::focusPane->splitPane(Split::Horizontal, .5); }};
 	splitGroup.action[2] = {"Close", [&](auto) { Pane::closePane(Pane::focusPane); }};
 
 	for (int i = 0; i < 26; i++)

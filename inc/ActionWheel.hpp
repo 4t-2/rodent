@@ -65,7 +65,7 @@ class ActionWheel;
 class Action
 {
 	public:
-		std::string			  label;
+		std::string									  label;
 		std::function<void(ActionWheel *actionWheel)> action;
 };
 
@@ -73,16 +73,23 @@ class ActionGroup
 {
 	public:
 		Action *action;
+		Action *modAction;
 		int		total;
+		bool	canMod = false;
 
-		ActionGroup(int total) : total(total)
+		ActionGroup(int total, bool canMod) : total(total), canMod(canMod)
 		{
-			action		= new Action[total];
+			action = new Action[total];
+			if (canMod)
+			{
+				modAction = new Action[total];
+			}
 		}
 
 		~ActionGroup()
 		{
 			delete[] action;
+			delete[] modAction;
 		}
 };
 
@@ -99,9 +106,9 @@ class ActionWheel : public agl::Drawable
 
 		bool			 clickEvent;
 		agl::Vec<int, 2> clickPos;
+		bool			 rightDown;
 
-		ActionWheel(agl::Circle *circle, agl::Text *text, agl::Shape *line)
-			: circle(circle), text(text), line(line)
+		ActionWheel(agl::Circle *circle, agl::Text *text, agl::Shape *line) : circle(circle), text(text), line(line)
 		{
 		}
 
@@ -128,9 +135,16 @@ class ActionWheel : public agl::Drawable
 
 				glLineWidth(1);
 
+				Action *action = group.action;
+
+				if(rightDown && group.canMod)
+				{
+					action = group.modAction;
+				}
+
 				text->setColor(agl::Color::White);
 				text->clearText();
-				text->setText(group.action[i].label);
+				text->setText(action[i].label);
 				text->setPosition(center);
 
 				if (group.total % 2 == 0)
@@ -146,13 +160,13 @@ class ActionWheel : public agl::Drawable
 					float lower = rotation - half;
 					float upper = rotation + half;
 
-					if(lower < 0 && clickRotation > upper)
+					if (lower < 0 && clickRotation > upper)
 					{
 						lower += 360;
 						upper = 360;
 					}
 
-					if(group.action[i].label == "split")
+					if (action[i].label == "split")
 					{
 						std::cout << '\n';
 						std::cout << lower << '\n';
@@ -161,7 +175,7 @@ class ActionWheel : public agl::Drawable
 
 					if (clickRotation > lower && clickRotation < upper)
 					{
-						group.action[i].action(this);
+						action[i].action(this);
 					}
 				}
 

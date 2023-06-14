@@ -61,6 +61,7 @@ int main()
 	agl::Vec<int, 2> currentPos;
 	bool			 clickEvent;
 	bool			 leftDown;
+	bool			 rightDown;
 
 	Listener mouseListener(
 		[&]() {
@@ -144,21 +145,19 @@ int main()
 
 	ActionWheel mainWheel(&circle, &text, &line);
 
-	ActionGroup startGroup(6);
-	ActionGroup splitGroup(3);
-	ActionGroup upperGroup(26);
-	ActionGroup lowerGroup(26);
-	ActionGroup mathGroup(20);
-	ActionGroup seperatorGroup(12);
-	ActionGroup miscGroup(13);
+	ActionGroup startGroup(5, false);
+	ActionGroup splitGroup(3, false);
+	ActionGroup letterGroup(26, true);
+	ActionGroup mathGroup(20, false);
+	ActionGroup seperatorGroup(6, true);
+	ActionGroup miscGroup(6, true);
 
 	startGroup.action[0] = {"Split", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &splitGroup; }};
-	startGroup.action[1] = {"Capital", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &upperGroup; }};
-	startGroup.action[2] = {"Lowercase", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &lowerGroup; }};
-	startGroup.action[3] = {"Math", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &mathGroup; }};
-	startGroup.action[4] = {"Seperators",
+	startGroup.action[1] = {"Letter", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &letterGroup; }};
+	startGroup.action[2] = {"Math", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &mathGroup; }};
+	startGroup.action[3] = {"Seperators",
 							[&](ActionWheel *actionWheel) { actionWheel->currentGroup = &seperatorGroup; }};
-	startGroup.action[5] = {"Misc", [&](ActionWheel *actionWheel) {}};
+	startGroup.action[4] = {"Misc", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &miscGroup; }};
 
 	splitGroup.action[0] = {"Vertical", [&](auto) { Pane::focusPane->splitPane(Split::Vertical, .5); }};
 	splitGroup.action[1] = {"Horizontal", [&](auto) { Pane::focusPane->splitPane(Split::Horizontal, .5); }};
@@ -169,7 +168,7 @@ int main()
 		std::string str = "A";
 		str[0] += i;
 
-		upperGroup.action[i] = {str, [=](auto) { Pane::keybuffer += str; }};
+		letterGroup.modAction[i] = {str, [=](auto) { Pane::keybuffer += str; }};
 	}
 
 	for (int i = 0; i < 26; i++)
@@ -177,7 +176,7 @@ int main()
 		std::string str = "a";
 		str[0] += i;
 
-		lowerGroup.action[i] = {str, [=](auto) { Pane::keybuffer += str; }};
+		letterGroup.action[i] = {str, [=](auto) { Pane::keybuffer += str; }};
 	}
 
 	mathGroup.action[0]	 = {"%", [&](auto) { Pane::keybuffer += "%"; }};
@@ -201,32 +200,57 @@ int main()
 	mathGroup.action[18] = {">", [&](auto) { Pane::keybuffer += ">"; }};
 	mathGroup.action[19] = {"^", [&](auto) { Pane::keybuffer += "^"; }};
 
-	seperatorGroup.action[0]  = {"\"", [&](auto) { Pane::keybuffer += "\""; }};
-	seperatorGroup.action[1]  = {"'", [&](auto) { Pane::keybuffer += "'"; }};
-	seperatorGroup.action[2]  = {"(", [&](auto) { Pane::keybuffer += "("; }};
-	seperatorGroup.action[3]  = {")", [&](auto) { Pane::keybuffer += ")"; }};
-	seperatorGroup.action[4]  = {",", [&](auto) { Pane::keybuffer += ","; }};
-	seperatorGroup.action[5]  = {";", [&](auto) { Pane::keybuffer += ";"; }};
-	seperatorGroup.action[6]  = {"[", [&](auto) { Pane::keybuffer += "["; }};
-	seperatorGroup.action[7]  = {"]", [&](auto) { Pane::keybuffer += "]"; }};
-	seperatorGroup.action[8]  = {"{", [&](auto) { Pane::keybuffer += "{"; }};
-	seperatorGroup.action[9]  = {"}", [&](auto) { Pane::keybuffer += "}"; }};
-	seperatorGroup.action[10] = {"Space", [&](auto) { Pane::keybuffer += " "; }};
-	seperatorGroup.action[11] = {"Return", [&](auto) { Pane::keybuffer += "\n"; }};
+	// seperatorGroup.action[0]  = {"\"", [&](auto) { Pane::keybuffer += "\""; }};
+	// seperatorGroup.action[1]  = {"'", [&](auto) { Pane::keybuffer += "'"; }};
+	// seperatorGroup.action[2]  = {"(", [&](auto) { Pane::keybuffer += "("; }};
+	// seperatorGroup.action[3]  = {")", [&](auto) { Pane::keybuffer += ")"; }};
+	// seperatorGroup.action[4]  = {",", [&](auto) { Pane::keybuffer += ","; }};
+	// seperatorGroup.action[5]  = {";", [&](auto) { Pane::keybuffer += ";"; }};
+	// seperatorGroup.action[6]  = {"[", [&](auto) { Pane::keybuffer += "["; }};
+	// seperatorGroup.action[7]  = {"]", [&](auto) { Pane::keybuffer += "]"; }};
+	// seperatorGroup.action[8]  = {"{", [&](auto) { Pane::keybuffer += "{"; }};
+	// seperatorGroup.action[9]  = {"}", [&](auto) { Pane::keybuffer += "}"; }};
+	// seperatorGroup.action[10] = {"Space", [&](auto) { Pane::keybuffer += " "; }};
+	// seperatorGroup.action[11] = {"Return", [&](auto) { Pane::keybuffer += "\n"; }};
+	//
+	// miscGroup.action[0]	 = {"!", [&](auto) { Pane::keybuffer += "!"; }};
+	// miscGroup.action[1]	 = {"#", [&](auto) { Pane::keybuffer += "#"; }};
+	// miscGroup.action[2]	 = {"$", [&](auto) { Pane::keybuffer += "$"; }};
+	// miscGroup.action[3]	 = {"&", [&](auto) { Pane::keybuffer += "&"; }};
+	// miscGroup.action[4]	 = {":", [&](auto) { Pane::keybuffer += ":"; }};
+	// miscGroup.action[5]	 = {"?", [&](auto) { Pane::keybuffer += "?"; }};
+	// miscGroup.action[6]	 = {"@", [&](auto) { Pane::keybuffer += "@"; }};
+	// miscGroup.action[7]	 = {"\\", [&](auto) { Pane::keybuffer += "\\"; }};
+	// miscGroup.action[8]	 = {"_", [&](auto) { Pane::keybuffer += "_"; }};
+	// miscGroup.action[9]	 = {"|", [&](auto) { Pane::keybuffer += "|"; }};
+	// miscGroup.action[10] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
+	// miscGroup.action[11] = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};
 
-	miscGroup.action[0]	 = {"!", [&](auto) { Pane::keybuffer += "!"; }};
-	miscGroup.action[1]	 = {"#", [&](auto) { Pane::keybuffer += "#"; }};
-	miscGroup.action[2]	 = {"$", [&](auto) { Pane::keybuffer += "$"; }};
-	miscGroup.action[3]	 = {"&", [&](auto) { Pane::keybuffer += "&"; }};
-	miscGroup.action[4]	 = {":", [&](auto) { Pane::keybuffer += ":"; }};
-	miscGroup.action[5]	 = {"?", [&](auto) { Pane::keybuffer += "?"; }};
-	miscGroup.action[6]	 = {"@", [&](auto) { Pane::keybuffer += "@"; }};
-	miscGroup.action[7]	 = {"\\", [&](auto) { Pane::keybuffer += "\\"; }};
-	miscGroup.action[8]	 = {"_", [&](auto) { Pane::keybuffer += "_"; }};
-	miscGroup.action[9]	 = {"|", [&](auto) { Pane::keybuffer += "|"; }};
-	miscGroup.action[10] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
-	miscGroup.action[11] = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};
-	miscGroup.action[12] = {"Delete", [&](auto) { Pane::keybuffer += 127; }};
+	seperatorGroup.action[0]	= {"\"", [&](auto) { Pane::keybuffer += "\""; }};
+	seperatorGroup.modAction[0] = {"'", [&](auto) { Pane::keybuffer += "'"; }};
+	seperatorGroup.action[1]	= {"(", [&](auto) { Pane::keybuffer += "("; }};
+	seperatorGroup.modAction[1] = {")", [&](auto) { Pane::keybuffer += ")"; }};
+	seperatorGroup.action[2]	= {"[", [&](auto) { Pane::keybuffer += "["; }};
+	seperatorGroup.modAction[2] = {"]", [&](auto) { Pane::keybuffer += "]"; }};
+	seperatorGroup.action[3]	= {"{", [&](auto) { Pane::keybuffer += "{"; }};
+	seperatorGroup.modAction[3] = {"}", [&](auto) { Pane::keybuffer += "}"; }};
+	seperatorGroup.action[4]	= {";", [&](auto) { Pane::keybuffer += ";"; }};
+	seperatorGroup.modAction[4] = {",", [&](auto) { Pane::keybuffer += ","; }};
+	seperatorGroup.action[5]	= {"Space", [&](auto) { Pane::keybuffer += " "; }};
+	seperatorGroup.modAction[5] = {"Return", [&](auto) { Pane::keybuffer += "\n"; }};
+
+	miscGroup.action[0]	   = {"!", [&](auto) { Pane::keybuffer += "!"; }};
+	miscGroup.modAction[0] = {"?", [&](auto) { Pane::keybuffer += "?"; }};
+	miscGroup.action[1]	   = {"#", [&](auto) { Pane::keybuffer += "#"; }};
+	miscGroup.modAction[1] = {"$", [&](auto) { Pane::keybuffer += "$"; }};
+	miscGroup.action[2]	   = {"&", [&](auto) { Pane::keybuffer += "&"; }};
+	miscGroup.modAction[2] = {"@", [&](auto) { Pane::keybuffer += "@"; }};
+	miscGroup.action[3]	   = {":", [&](auto) { Pane::keybuffer += ":"; }};
+	miscGroup.modAction[3] = {"_", [&](auto) { Pane::keybuffer += "_"; }};
+	miscGroup.action[4]	   = {"|", [&](auto) { Pane::keybuffer += "|"; }};
+	miscGroup.modAction[4] = {"\\", [&](auto) { Pane::keybuffer += "\\"; }};
+	miscGroup.action[5]	   = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};
+	miscGroup.modAction[5] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
 
 	while (!event.windowClose())
 	{
@@ -304,13 +328,12 @@ int main()
 
 		currentPos = event.getPointerWindowPosition();
 		leftDown   = event.isPointerButtonPressed(Button1Mask);
+		rightDown  = event.isPointerButtonPressed(Button3Mask);
 
-		if (event.isPointerButtonPressed(Button3Mask))
+		if (event.isPointerButtonPressed(Button3Mask) && !mainWheel.exist)
 		{
 			context.create();
 		}
-
-		context.leftDown = leftDown;
 
 		if (!context.exists && !mainWheel.exist)
 		{
@@ -320,8 +343,14 @@ int main()
 			Pane::leftDown	 = leftDown;
 		}
 
+		if (!mainWheel.exist)
+		{
+			context.leftDown = leftDown;
+		}
+
 		mainWheel.clickEvent = clickEvent;
 		mainWheel.clickPos	 = clickPos;
+		mainWheel.rightDown	 = rightDown;
 
 		agl::Vec<int, 2> windowSize;
 		windowSize.x = window.getWindowAttributes().width;

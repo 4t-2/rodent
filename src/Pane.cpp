@@ -1,4 +1,5 @@
 #include "../inc/Pane.hpp"
+#include <filesystem>
 
 Pane			*Pane::focusPane  = nullptr;
 bool			 Pane::clickEvent = false;
@@ -178,7 +179,7 @@ void Pane::drawHorizontalSplit(agl::RenderWindow &window)
 	window.draw(*Bchild);
 }
 
-void Pane::processLogic()
+void Pane::processRootLogic()
 {
 	if (clickEvent)
 	{
@@ -287,6 +288,180 @@ void Pane::processLogic()
 			else if (str[i] == 127)
 			{
 				str.erase(i, 2);
+				i--;
+			}
+		}
+
+		textCursorIndex += length;
+	}
+}
+
+void Pane::processBrowserLogic()
+{
+	if (clickEvent)
+	{
+		if (clickPos.x > pos.x && clickPos.y > pos.y)
+		{
+			if (clickPos.x < (pos.x + size.x) && clickPos.y < (pos.y + size.y))
+			{
+				focusPane = this;
+			}
+		}
+	}
+
+	if (focusPane == this && clickEvent)
+	{
+		mode = Mode::Insert;
+	}
+
+	if (focusPane == this && leftDown && mode != Mode::Select)
+	{
+		if (currentPos.x != clickPos.x || currentPos.y != clickPos.y)
+		{
+			selection.start = CursorInfo();
+			selection.end	= CursorInfo();
+
+			mode = Mode::Select;
+		}
+	}
+
+	if (focusPane != this)
+	{
+		mode = Mode::Empty;
+	}
+
+	static std::string path = "./";
+
+	str = "";
+
+	str += path;
+	str += "\n\n";
+
+	auto containsUnicode = [](std::string str) {
+		for (char &c : str)
+		{
+			if (c & (1 << 7))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	if (std::filesystem::is_directory(path))
+	{
+		for (auto &entry : std::filesystem::directory_iterator(path))
+		{
+			if (containsUnicode(entry.path()))
+			{
+				continue;
+			}
+
+			str += entry.path();
+
+			if (entry.is_directory())
+			{
+				str += " DIR";
+			}
+
+			str += "\n";
+		}
+	}
+
+	if (textCursorIndex > path.length() - 1 && textCursorIndex != -1)
+	{
+		textCursorIndex = path.length() - 1;
+	}
+
+	if (focusPane == this)
+	{
+		if (path.length() == 0)
+		{
+			path += keybuffer;
+		}
+		else
+		{
+			switch (mode)
+			{
+				case Mode::Insert:
+					if (textCursorIndex < -1)
+					{
+						textCursorIndex = -1;
+					}
+
+					std::cout << "first" << '\n';
+					std::cout << textCursorIndex << '\n';
+					std::cout << path.length() << '\n';
+					path.insert(textCursorIndex + 1, keybuffer);
+					std::cout << "second" << '\n';
+					break;
+				case Mode::Select:
+					if (keybuffer != "")
+					{
+						if (selection.start.i > path.length() - 1)
+						{
+						}
+						else if (selection.end.i > path.length() - 1)
+						{
+						}
+						else
+						{
+							if (keybuffer[0] == 127 || keybuffer[0] == 8)
+							{
+								keybuffer = keybuffer.substr(1, keybuffer.length());
+							}
+
+							path = path.substr(0, selection.start.i + 1) + keybuffer +
+								   path.substr(selection.end.i + 1, path.length() - selection.end.i + 1);
+
+							textCursorIndex = selection.start.i;
+
+							mode = Mode::Insert;
+						}
+					}
+					break;
+				case Mode::Empty:
+					break;
+			}
+		}
+
+		int length = 0;
+
+		for (char &c : keybuffer)
+		{
+			if (c == 8)
+			{
+				length--;
+			}
+			else if (c == 127)
+			{
+			}
+			else
+			{
+				length++;
+			}
+		}
+
+		while (path[0] == 127 || path[0] == 8)
+		{
+			path.erase(0, 1);
+		}
+
+		for (int i = 1; i < path.length(); i++)
+		{
+			if (path[i] == 13)
+			{
+				path[i] = 10;
+			}
+			else if (path[i] == 8)
+			{
+				path.erase(i - 1, 2);
+				i -= 2;
+			}
+			else if (path[i] == 127)
+			{
+				path.erase(i, 2);
 				i--;
 			}
 		}
@@ -423,13 +598,22 @@ void Pane::drawFunction(agl::RenderWindow &window)
 
 			break;
 		case Split::Root:
-			this->processLogic();
-			this->drawRoot(window);
+			switch (paneType)
+			{
+				case PaneType::TextEditor:
+					this->processRootLogic();
+					this->drawRoot(window);
+					break;
+				case PaneType::FileBrowser:
+					this->processBrowserLogic();
+					this->drawRoot(window);
+					break;
+			}
 
 			break;
 		case Split::Base:
 			Achild->size = size;
-			Achild->pos = {0, 0};
+			Achild->pos	 = {0, 0};
 			Achild->drawFunction(window);
 
 			break;

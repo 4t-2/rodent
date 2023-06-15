@@ -35,21 +35,28 @@ enum Mode
 	Empty,
 };
 
+enum PaneType
+{
+	TextEditor,
+	FileBrowser
+};
+
 class Pane : public agl::Drawable
 {
 	public:
 		agl::Rectangle	  *rect = nullptr;
 		agl::Vec<int, 2>   size;
-		agl::Vec<int, 2>   pos	 = {0, 0};
-		Split			   split = Split::Root;
-		float			   percent; // 1.0 means Bchild covered, 0.0 Achild covered
-		Pane			  *Achild = nullptr;
-		Pane			  *Bchild = nullptr;
-		Pane			  *parent = nullptr;
-		agl::Text		  *text	  = nullptr;
-		std::string		   str	  = "";
-		agl::Vec<float, 2> textCursorPos;
+		agl::Vec<int, 2>   pos			   = {0, 0};
+		Split			   split		   = Split::Root;
+		float			   percent		   = 0; // 1.0 means Bchild covered, 0.0 Achild covered
+		Pane			  *Achild		   = nullptr;
+		Pane			  *Bchild		   = nullptr;
+		Pane			  *parent		   = nullptr;
+		agl::Text		  *text			   = nullptr;
+		std::string		   str			   = "";
+		agl::Vec<float, 2> textCursorPos   = {0, 0};
 		int				   textCursorIndex = 0;
+		PaneType		   paneType		   = PaneType::FileBrowser;
 
 		struct
 		{
@@ -147,8 +154,10 @@ class Pane : public agl::Drawable
 		void drawVerticalSplit(agl::RenderWindow &window);
 		void drawHorizontalSplit(agl::RenderWindow &window);
 		void drawRoot(agl::RenderWindow &window);
+		void drawBrowser(agl::RenderWindow &window);
 
-		void processLogic();
+		void processRootLogic();
+		void processBrowserLogic();
 
 		void drawFunction(agl::RenderWindow &window) override;
 

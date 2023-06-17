@@ -330,12 +330,10 @@ void Pane::processBrowserLogic()
 		mode = Mode::Empty;
 	}
 
-	static std::string path = "./";
-
 	str = "";
 
 	str += path;
-	str += "\n\n";
+	str += "\n";
 
 	auto containsUnicode = [](std::string str) {
 		for (char &c : str)
@@ -359,6 +357,7 @@ void Pane::processBrowserLogic()
 			}
 
 			str += entry.path();
+			str.push_back('\0');
 
 			if (entry.is_directory())
 			{
@@ -369,9 +368,75 @@ void Pane::processBrowserLogic()
 		}
 	}
 
+	if (textCursorIndex > (int)path.length() && this == Pane::focusPane)
+	{
+		int start = textCursorIndex;
+
+		while (true)
+		{
+			if (start < 0)
+			{
+				start++;
+				break;
+			}
+			else if (start > str.length())
+			{
+				start--;
+				break;
+			}
+			else if (str[start] == '\n')
+			{
+				start++;
+				break;
+			}
+			start--;
+		}
+
+		int end = start;
+		end++;
+
+		while (true)
+		{
+			if (end < 0)
+			{
+				end++;
+				break;
+			}
+			else if (end > str.length())
+			{
+				end--;
+				break;
+			}
+			else if (str[end] == '\0')
+			{
+				end++;
+				break;
+			}
+			end++;
+		}
+
+		std::string newPath = str.substr(start, end - start);
+
+		if (newPath != "")
+		{
+			path = newPath;
+		}
+
+		if (!std::filesystem::is_directory(path))
+		{
+			str		 = "";
+			paneType = PaneType::TextEditor;
+		}
+	}
+
 	if (textCursorIndex > path.length() - 1 && textCursorIndex != -1)
 	{
 		textCursorIndex = path.length() - 1;
+	}
+
+	if (path.length() == 0)
+	{
+		textCursorIndex = -1;
 	}
 
 	if (focusPane == this)
@@ -390,11 +455,7 @@ void Pane::processBrowserLogic()
 						textCursorIndex = -1;
 					}
 
-					std::cout << "first" << '\n';
-					std::cout << textCursorIndex << '\n';
-					std::cout << path.length() << '\n';
 					path.insert(textCursorIndex + 1, keybuffer);
-					std::cout << "second" << '\n';
 					break;
 				case Mode::Select:
 					if (keybuffer != "")

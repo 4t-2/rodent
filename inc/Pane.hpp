@@ -57,6 +57,7 @@ class Pane : public agl::Drawable
 		agl::Vec<float, 2> textCursorPos   = {0, 0};
 		int				   textCursorIndex = 0;
 		PaneType		   paneType		   = PaneType::FileBrowser;
+		std::string		   path			   = "./";
 
 		struct
 		{

@@ -1,4 +1,6 @@
 #include "../lib/AGL/agl.hpp"
+#include <filesystem>
+#include <fstream>
 
 #define FONTSIZE 24
 #define BORDER	 2
@@ -159,6 +161,37 @@ class Pane : public agl::Drawable
 
 		void processRootLogic();
 		void processBrowserLogic();
+
+		void open(std::string path)
+		{
+			this->path = path;
+
+			if (std::filesystem::is_directory(path))
+			{
+				paneType = PaneType::FileBrowser;
+
+				str = "";
+			}
+			else
+			{
+				paneType = PaneType::TextEditor;
+
+				str = "";
+
+				std::fstream fs(path, std::ios::in);
+
+				while (true)
+				{
+					char c = fs.get();
+					if (c != -1)
+					{
+						str += c;
+					} else {
+						break;
+					}
+				}
+			}
+		}
 
 		void drawFunction(agl::RenderWindow &window) override;
 

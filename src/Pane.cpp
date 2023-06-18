@@ -415,18 +415,7 @@ void Pane::processBrowserLogic()
 			end++;
 		}
 
-		std::string newPath = str.substr(start, end - start);
-
-		if (newPath != "")
-		{
-			path = newPath;
-		}
-
-		if (!std::filesystem::is_directory(path))
-		{
-			str		 = "";
-			paneType = PaneType::TextEditor;
-		}
+		this->open(str.substr(start, end - start));
 	}
 
 	if (textCursorIndex > path.length() - 1 && textCursorIndex != -1)

@@ -415,7 +415,18 @@ void Pane::processBrowserLogic()
 			end++;
 		}
 
-		this->open(str.substr(start, end - start));
+		std::string newPath = str.substr(start, end - start);
+
+		for (int i = 0; i < newPath.length(); i++)
+		{
+			if (newPath[i] == '\0')
+			{
+				newPath = newPath.replace(i, 1, "");
+				i--;
+			}
+		}
+
+		this->open(newPath);
 	}
 
 	if (textCursorIndex > path.length() - 1 && textCursorIndex != -1)

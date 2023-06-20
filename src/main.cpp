@@ -145,7 +145,7 @@ int main()
 
 	ActionWheel mainWheel(&circle, &text, &line);
 
-	ActionGroup startGroup(5, false);
+	ActionGroup startGroup(6, false);
 	ActionGroup splitGroup(3, false);
 	ActionGroup letterGroup(26, true);
 	ActionGroup mathGroup(20, false);
@@ -158,6 +158,7 @@ int main()
 	startGroup.action[3] = {"Seperators",
 							[&](ActionWheel *actionWheel) { actionWheel->currentGroup = &seperatorGroup; }};
 	startGroup.action[4] = {"Misc", [&](ActionWheel *actionWheel) { actionWheel->currentGroup = &miscGroup; }};
+	startGroup.action[5] = {"Browse", [&](auto) { Pane::focusPane->open("./"); }};
 
 	splitGroup.action[0] = {"Vertical", [&](auto) { Pane::focusPane->splitPane(Split::Vertical, .5); }};
 	splitGroup.action[1] = {"Horizontal", [&](auto) { Pane::focusPane->splitPane(Split::Horizontal, .5); }};
@@ -210,8 +211,9 @@ int main()
 	// seperatorGroup.action[7]  = {"]", [&](auto) { Pane::keybuffer += "]"; }};
 	// seperatorGroup.action[8]  = {"{", [&](auto) { Pane::keybuffer += "{"; }};
 	// seperatorGroup.action[9]  = {"}", [&](auto) { Pane::keybuffer += "}"; }};
-	// seperatorGroup.action[10] = {"Space", [&](auto) { Pane::keybuffer += " "; }};
-	// seperatorGroup.action[11] = {"Return", [&](auto) { Pane::keybuffer += "\n"; }};
+	// seperatorGroup.action[10] = {"Space", [&](auto) { Pane::keybuffer += " ";
+	// }}; seperatorGroup.action[11] = {"Return", [&](auto) { Pane::keybuffer +=
+	// "\n"; }};
 	//
 	// miscGroup.action[0]	 = {"!", [&](auto) { Pane::keybuffer += "!"; }};
 	// miscGroup.action[1]	 = {"#", [&](auto) { Pane::keybuffer += "#"; }};
@@ -220,8 +222,8 @@ int main()
 	// miscGroup.action[4]	 = {":", [&](auto) { Pane::keybuffer += ":"; }};
 	// miscGroup.action[5]	 = {"?", [&](auto) { Pane::keybuffer += "?"; }};
 	// miscGroup.action[6]	 = {"@", [&](auto) { Pane::keybuffer += "@"; }};
-	// miscGroup.action[7]	 = {"\\", [&](auto) { Pane::keybuffer += "\\"; }};
-	// miscGroup.action[8]	 = {"_", [&](auto) { Pane::keybuffer += "_"; }};
+	// miscGroup.action[7]	 = {"\\", [&](auto) { Pane::keybuffer += "\\";
+	// }}; miscGroup.action[8]	 = {"_", [&](auto) { Pane::keybuffer += "_"; }};
 	// miscGroup.action[9]	 = {"|", [&](auto) { Pane::keybuffer += "|"; }};
 	// miscGroup.action[10] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
 	// miscGroup.action[11] = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};

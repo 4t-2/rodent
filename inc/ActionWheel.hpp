@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../lib/AGL/agl.hpp"
 
 #define RADIUS 300

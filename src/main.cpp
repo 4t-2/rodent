@@ -1,6 +1,10 @@
+// this is very bad and ugly code
+
 #include "../lib/AGL/agl.hpp"
+#include "../lib/IntNet/intnet.hpp"
 #include <fstream>
 
+#include "../inc/ActionList.hpp"
 #include "../inc/ActionWheel.hpp"
 #include "../inc/Context.hpp"
 #include "../inc/Listener.hpp"
@@ -254,6 +258,8 @@ int main()
 	miscGroup.action[5]	   = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};
 	miscGroup.modAction[5] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
 
+	ActionList actionList(&text, &rect);
+
 	while (!event.windowClose())
 	{
 		event.poll();
@@ -263,6 +269,7 @@ int main()
 		pane.updateSize(window);
 		mainWheel.center.x = window.getWindowAttributes().width / 2;
 		mainWheel.center.y = window.getWindowAttributes().height / 2;
+		actionList.center = mainWheel.center;
 
 		window.draw(pane);
 
@@ -270,6 +277,7 @@ int main()
 
 		window.draw(context);
 		window.draw(mainWheel);
+		window.draw(actionList);
 
 		window.display();
 
@@ -291,11 +299,13 @@ int main()
 			if (mainWheel.exist == false)
 			{
 				mainWheel.open(&startGroup);
+				actionList.open();
 			}
 		}
 		else
 		{
-			mainWheel.exist = false;
+			mainWheel.exist	  = false;
+			actionList.exists = false;
 		}
 
 		if (!utf8)

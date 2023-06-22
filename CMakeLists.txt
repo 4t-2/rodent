@@ -4,7 +4,7 @@ project(rodent)
 
 file(GLOB_RECURSE SRC ./src/*.cpp)
 file(GLOB_RECURSE AGL ./lib/AGL/src/*.cpp)
-file(GLOB_RECURSE PHY ./lib/PHY/src/*.cpp)
+file(GLOB_RECURSE INT ./lib/IntNet/src/*.cpp)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -22,7 +22,7 @@ elseif(CMAKE_BUILD_TYPE MATCHES Release)
 	message(STATUS "Building with release flags")
 endif()
 
-add_executable(${PROJECT_NAME}.out ${SRC} ${AGL} ${PHY})
+add_executable(${PROJECT_NAME}.out ${SRC} ${AGL} ${INT})
 
 target_link_libraries(${PROJECT_NAME}.out -lX11 -lGL -lGLEW -lSOIL -lfreetype)
 include_directories("/usr/include/freetype2")

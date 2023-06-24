@@ -9,9 +9,93 @@
 #include "../inc/Context.hpp"
 #include "../inc/Listener.hpp"
 #include "../inc/Pane.hpp"
+#include "../inc/TextPredictor.hpp"
+
+void train()
+{
+	TextPredictor tp;
+
+	std::fstream trainingStream("training.txt", std::ios::in);
+
+	std::string text = "";
+
+	while (true)
+	{
+		char c = trainingStream.get();
+
+		if (c != -1)
+		{
+			text += c;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	std::cout << text << '\n';
+
+	for (int i = 0; i < text.length() - (CHARBUFFERSIZE - 1); i++)
+	{
+		tp.train(text.substr(i, CHARBUFFERSIZE), text[CHARBUFFERSIZE + i]);
+		std::cout << i << " / " << text.length() - CHARBUFFERSIZE << '\n' << '\n';
+	}
+
+	std::fstream fs1("modelstruct", std::ios::out);
+	std::fstream fs2("modelnetwor", std::ios::out);
+
+	fs1 << ((in::NetworkStructure *)&tp.network->structure)->serialize();
+	fs2 << tp.network->serialize();
+
+	fs1.close();
+	fs2.close();
+	trainingStream.close();
+}
+
+// TextPredictor *loadModel()
+// {
+// 	std::fstream fs1("modelstruct", std::ios::in);
+// 	std::fstream fs2("modelnetwor", std::ios::in);
+//
+// 	std::string str = "";
+//
+// 	while(true)
+// 	{
+// 		char c = fs1.get();
+//
+// 		if(!fs1.eof())
+// 		{
+// 			str.append(&c);
+// 		}
+// 	}
+//
+// 	std::string net = "";
+// 	while(true)
+// 	{
+// 		char c = fs2.get();
+//
+// 		if(!fs2.eof())
+// 		{
+// 			str.append(&c);
+// 		}
+// 	}
+//
+// 	fs1.close();
+// 	fs2.close();
+//
+// 	in::NeuralNetwork nw((unsigned char*)str.c_str(), )
+//
+// 	TextPredictor *tp = new TextPredictor();
+//
+// 	tp = new TextPredictor();
+//
+// 	return tp;
+// }
 
 int main()
 {
+	train();
+	exit(1);
 	agl::RenderWindow window;
 	window.setup({1920, 1080}, "Rodent");
 	window.setClearColor(agl::Color::Black);
@@ -258,6 +342,8 @@ int main()
 	miscGroup.action[5]	   = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};
 	miscGroup.modAction[5] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
 
+	TextPredictor tp;
+
 	ActionList actionList(&text, &rect);
 
 	while (!event.windowClose())
@@ -269,7 +355,7 @@ int main()
 		pane.updateSize(window);
 		mainWheel.center.x = window.getWindowAttributes().width / 2;
 		mainWheel.center.y = window.getWindowAttributes().height / 2;
-		actionList.center = mainWheel.center;
+		actionList.center  = mainWheel.center;
 
 		window.draw(pane);
 

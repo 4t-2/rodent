@@ -11,6 +11,18 @@
 #include "../inc/Pane.hpp"
 #include "../inc/TextPredictor.hpp"
 
+void printGenText(TextPredictor *tp)
+{
+	std::string newText = "std";
+
+	newText += newText.substr(newText.length() - CHARBUFFERSIZE, CHARBUFFERSIZE);
+	for (int i = 0; i < 500 && newText[newText.length() - 1] != 0; i++)
+	{
+		newText += tp->predict(newText.substr(newText.length() - CHARBUFFERSIZE, CHARBUFFERSIZE));
+	}
+	std::cout << newText << '\n';
+}
+
 void train()
 {
 	TextPredictor tp;
@@ -41,59 +53,46 @@ void train()
 		std::cout << i << " / " << text.length() - CHARBUFFERSIZE << '\n' << '\n';
 	}
 
-	std::fstream fs1("modelstruct", std::ios::out);
-	std::fstream fs2("modelnetwor", std::ios::out);
+	std::fstream fs("modelstruct", std::ios::out);
 
-	fs1 << ((in::NetworkStructure *)&tp.network->structure)->serialize();
-	fs2 << tp.network->serialize();
+	fs << ((in::NetworkStructure *)&tp.network->structure)->serialize();
 
-	fs1.close();
-	fs2.close();
+	fs.close();
 	trainingStream.close();
+
+	printGenText(&tp);
+
+	return;
 }
 
-// TextPredictor *loadModel()
-// {
-// 	std::fstream fs1("modelstruct", std::ios::in);
-// 	std::fstream fs2("modelnetwor", std::ios::in);
-//
-// 	std::string str = "";
-//
-// 	while(true)
-// 	{
-// 		char c = fs1.get();
-//
-// 		if(!fs1.eof())
-// 		{
-// 			str.append(&c);
-// 		}
-// 	}
-//
-// 	std::string net = "";
-// 	while(true)
-// 	{
-// 		char c = fs2.get();
-//
-// 		if(!fs2.eof())
-// 		{
-// 			str.append(&c);
-// 		}
-// 	}
-//
-// 	fs1.close();
-// 	fs2.close();
-//
-// 	in::NeuralNetwork nw((unsigned char*)str.c_str(), )
-//
-// 	TextPredictor *tp = new TextPredictor();
-//
-// 	tp = new TextPredictor();
-//
-// 	return tp;
-// }
+TextPredictor *loadModel()
+{
+	std::fstream fs("modelstruct", std::ios::in);
+
+	std::string structure = "";
+	for (char c; fs.get(c); structure.append(1, c))
+		;
+
+	fs.close();
+
+	in::NetworkStructure ns((unsigned char*)structure.c_str());
+
+	in::NeuralNetwork *nn = new in::NeuralNetwork(ns);
+
+	TextPredictor *tp = new TextPredictor(nn);
+
+	printGenText(tp);
+
+	return tp;
+}
 
 int main()
 {
+	train();
+	delete loadModel();
+
+	return 0;
+
 	train();
 	exit(1);
 	agl::RenderWindow window;

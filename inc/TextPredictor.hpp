@@ -2,7 +2,7 @@
 
 #include "../lib/IntNet/intnet.hpp"
 
-#define CHARBUFFERSIZE 1
+#define CHARBUFFERSIZE 3
 
 class TextPredictor
 {

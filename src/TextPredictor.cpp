@@ -18,6 +18,8 @@ TextPredictor::TextPredictor()
 TextPredictor::TextPredictor(in::NeuralNetwork *network)
 {
 	this->network = network;
+	network->setActivation(in::sigmoid);
+	network->setInputNode(0, 1);
 }
 
 int charToNode(char c)

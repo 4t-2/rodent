@@ -4,10 +4,17 @@
 
 #define CHARBUFFERSIZE 3
 
+struct CharRank
+{
+		char  c;
+		float prob;
+};
+
 class TextPredictor
 {
 	public:
-		in::NeuralNetwork	*network;
+		in::NeuralNetwork	 *network;
+		std::vector<CharRank> rank;
 
 		TextPredictor();
 		TextPredictor(in::NeuralNetwork *network);

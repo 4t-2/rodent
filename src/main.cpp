@@ -11,6 +11,16 @@
 #include "../inc/Pane.hpp"
 #include "../inc/TextPredictor.hpp"
 
+long currentMilli()
+{
+	struct timespec spec;
+
+	clock_gettime(CLOCK_REALTIME, &spec);
+
+	long long milliseconds = spec.tv_sec * 1000 + spec.tv_nsec / 1000000;
+	return (long)milliseconds;
+}
+
 void printGenText(TextPredictor *tp)
 {
 	std::string newText = "std";
@@ -75,7 +85,7 @@ TextPredictor *loadModel()
 
 	fs.close();
 
-	in::NetworkStructure ns((unsigned char*)structure.c_str());
+	in::NetworkStructure ns((unsigned char *)structure.c_str());
 
 	in::NeuralNetwork *nn = new in::NeuralNetwork(ns);
 
@@ -88,13 +98,6 @@ TextPredictor *loadModel()
 
 int main()
 {
-	train();
-	delete loadModel();
-
-	return 0;
-
-	train();
-	exit(1);
 	agl::RenderWindow window;
 	window.setup({1920, 1080}, "Rodent");
 	window.setClearColor(agl::Color::Black);
@@ -341,9 +344,61 @@ int main()
 	miscGroup.action[5]	   = {"Backspace", [&](auto) { Pane::keybuffer += 8; }};
 	miscGroup.modAction[5] = {"~", [&](auto) { Pane::keybuffer += "~"; }};
 
-	TextPredictor tp;
+	TextPredictor *tp = loadModel();
 
 	ActionList actionList(&text, &rect);
+
+	actionList.onDraw = [&](auto) {
+		if (Pane::focusPane->paneType == PaneType::FileBrowser)
+		{
+			for (ListAction &action : actionList.action)
+			{
+				action = {"", []() {}};
+			}
+
+			return;
+		}
+
+		std::string str = Pane::focusPane->str;
+
+		std::string newStr = "";
+
+		int max = 0;
+
+		for (int i = Pane::focusPane->textCursorIndex + 1; i >= 0 && newStr.length() < CHARBUFFERSIZE; i--)
+		{
+			max++;
+			char c = str[i];
+			if (c >= 97 && c <= 122)
+			{
+				newStr += c;
+			}
+			else if (c >= 65 && c <= 90)
+			{
+				newStr += c + 32;
+			}
+		}
+
+		if (newStr.length() < CHARBUFFERSIZE)
+		{
+			for (ListAction &action : actionList.action)
+			{
+				action = {"", []() {}};
+			}
+
+			return;
+		}
+
+		tp->predict(newStr.substr(newStr.length() - CHARBUFFERSIZE, CHARBUFFERSIZE));
+
+		for (int i = 0; i < 26; i++)
+		{
+			actionList.action[i] = {std::string() + tp->rank[i].c,
+									[&]() { Pane::keybuffer += std::string() + tp->rank[i].c; }};
+		}
+	};
+
+	actionList.action[0] = {"a", []() { std::cout << "ad" << '\n'; }};
 
 	while (!event.windowClose())
 	{
@@ -461,10 +516,12 @@ int main()
 
 	text.clearText();
 	font.deleteFont();
-	;
+
 	blank.deleteTexture();
 	shader.deleteProgram();
 	window.close();
+
+	delete tp;
 
 	return 0;
 }

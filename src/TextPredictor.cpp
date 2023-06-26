@@ -5,7 +5,8 @@
 
 TextPredictor::TextPredictor()
 {
-	in::NetworkStructure netstruct = in::NetworkStructure(1 + (CHARBUFFERSIZE * CHARDIMENSION), {}, CHARDIMENSION); // null, a-z, , \n
+	in::NetworkStructure netstruct = in::NetworkStructure(1 + (CHARBUFFERSIZE * CHARDIMENSION), {},
+														  CHARDIMENSION); // null, a-z, , \n
 	in::NetworkStructure::randomWeights(netstruct);
 
 	network = new in::NeuralNetwork(netstruct);
@@ -62,20 +63,35 @@ char TextPredictor::predict(std::string input)
 
 	network->update();
 
-	int	  max		  = 0;
-	float val		  = 0;
-	int	  totalSubOut = network->structure.totalNodes - network->structure.totalOutputNodes;
+	int totalSubOut = network->structure.totalNodes - network->structure.totalOutputNodes;
+
+	rank.clear();
+
+	float val;
+	float max;
 
 	for (int i = 0; i < network->structure.totalOutputNodes; i++)
 	{
-		if (network->node[i + totalSubOut].value > val)
+		for (int x = 0; x < rank.size(); x++)
 		{
-			val = network->node[i + totalSubOut].value;
-			max = i;
+			if (network->node[i + totalSubOut].value > rank[x].prob)
+			{
+				val = network->node[i + totalSubOut].value;
+				max = i;
+				rank.insert(rank.begin() + x, {nodeToChar(max), val});
+
+				goto endFor;
+			}
 		}
+
+		val = network->node[i + totalSubOut].value;
+		max = i;
+		rank.push_back({nodeToChar(max), val});
+
+	endFor:;
 	}
 
-	return nodeToChar(max);
+	return rank[0].c;
 }
 
 void TextPredictor::train(std::string input, char target)

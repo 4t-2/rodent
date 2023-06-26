@@ -5,6 +5,7 @@
 #define LISTOFFSET 10
 #define ITEMSIDE   50
 #define LISTBORDER 1
+#define LISTPADDING 10
 
 class ListAction
 {
@@ -73,6 +74,13 @@ class ActionList : public agl::Drawable
 				rect->setColor(DBLUE);
 
 				window.drawShape(*rect);
+
+				text->clearText();
+				text->setColor(agl::Color::White);
+				text->setText(action[i].label);
+				text->setPosition(center + agl::Vec<float, 2>{x + LISTPADDING, y + LISTPADDING});
+				
+				window.drawText(*text);
 			}
 		}
 

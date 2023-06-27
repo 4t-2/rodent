@@ -91,8 +91,6 @@ TextPredictor *loadModel()
 
 	TextPredictor *tp = new TextPredictor(nn);
 
-	printGenText(tp);
-
 	return tp;
 }
 
@@ -346,6 +344,8 @@ int main()
 
 	TextPredictor *tp = loadModel();
 
+	printGenText(tp);
+
 	ActionList actionList(&text, &rect);
 
 	actionList.onDraw = [&](auto) {
@@ -371,11 +371,11 @@ int main()
 			char c = str[i];
 			if (c >= 97 && c <= 122)
 			{
-				newStr += c;
+				newStr = c + newStr;
 			}
 			else if (c >= 65 && c <= 90)
 			{
-				newStr += c + 32;
+				newStr = char(c + 32) + newStr;
 			}
 		}
 
@@ -389,12 +389,21 @@ int main()
 			return;
 		}
 
+		std::cout << newStr << '\n';
+
 		tp->predict(newStr.substr(newStr.length() - CHARBUFFERSIZE, CHARBUFFERSIZE));
 
 		for (int i = 0; i < 26; i++)
 		{
-			actionList.action[i] = {std::string() + tp->rank[i].c,
-									[&]() { Pane::keybuffer += std::string() + tp->rank[i].c; }};
+			int mod = 0;
+
+			if(actionList.rightDown)
+			{
+				mod = -32;
+			}
+
+			actionList.action[i].label	= std::string() + char(tp->rank[i].c + mod);
+			actionList.action[i].action = [=]() { Pane::keybuffer += std::string() + char((&(tp->rank[i]))->c + mod); };
 		}
 	};
 
@@ -503,6 +512,10 @@ int main()
 		mainWheel.clickEvent = clickEvent;
 		mainWheel.clickPos	 = clickPos;
 		mainWheel.rightDown	 = rightDown;
+
+		actionList.clickEvent = clickEvent;
+		actionList.rightDown  = rightDown;
+		actionList.clickPos	  = clickPos;
 
 		agl::Vec<int, 2> windowSize;
 		windowSize.x = window.getWindowAttributes().width;

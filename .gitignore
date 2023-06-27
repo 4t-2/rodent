@@ -10,3 +10,5 @@ bin/modelstruct
 bin/text.txt
 bin/training.txt
 bin/unclean.txt
+CMakeFiles/cmake.check_cache
+CMakeCache.txt

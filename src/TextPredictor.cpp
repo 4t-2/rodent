@@ -42,13 +42,22 @@ char nodeToChar(int node)
 	if ((node + 96) >= 97 && (node + 96) <= 122)
 	{
 		ni = node + 96;
+	} else {
+		ni = 'z'; // lazy fix
 	}
-
 	return ni;
 }
 
 char TextPredictor::predict(std::string input)
 {
+	for(int i = 97; i <= 122; i++)
+	{
+		if(nodeToChar(charToNode(i)) != i)
+		{
+			std::cout << "false " << i << '\n';
+		}
+	}
+
 	for (int i = 1; i < network->structure.totalInputNodes; i++)
 	{
 		network->setInputNode(i, 0);

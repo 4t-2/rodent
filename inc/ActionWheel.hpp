@@ -177,6 +177,7 @@ class ActionWheel : public agl::Drawable
 
 					if (clickRotation > lower && clickRotation < upper)
 					{
+						if((center - clickPos).length() < RADIUS)
 						action[i].action(this);
 					}
 				}

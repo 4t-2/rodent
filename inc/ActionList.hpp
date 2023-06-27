@@ -45,15 +45,14 @@ class ActionList : public agl::Drawable
 
 			for (int i = 0; i < ACTIONS; i++)
 			{
-				float x = ACTIONS * ITEMSIDE * -.5;
-				x += ITEMSIDE * i;
-				float y = -RADIUS - 100 - LISTOFFSET;
+				agl::Vec<float, 2> pos = {float(ACTIONS * ITEMSIDE * -.5) + (ITEMSIDE * i), -RADIUS - 100 - LISTOFFSET};
+				pos += center;
 
 				if (clickEvent)
 				{
-					if (clickPos.x > x && clickPos.x < x + ITEMSIDE)
+					if (clickPos.x > pos.x && clickPos.x < pos.x + ITEMSIDE)
 					{
-						if (clickPos.y > y && clickPos.y < y + ITEMSIDE)
+						if (clickPos.y > pos.y && clickPos.y < pos.y + ITEMSIDE)
 						{
 							action[i].action();
 						}
@@ -61,24 +60,25 @@ class ActionList : public agl::Drawable
 				}
 
 				rect->setSize({ITEMSIDE, ITEMSIDE});
-				rect->setPosition(center + agl::Vec<float, 2>{x, y});
+				rect->setPosition(pos);
 				rect->setColor(DGRAY);
 
 				window.drawShape(*rect);
 
-				x += LISTBORDER;
-				y += LISTBORDER;
+				pos += {LISTBORDER, LISTBORDER};
 
 				rect->setSize({ITEMSIDE - LISTBORDER, ITEMSIDE - LISTBORDER * 2});
-				rect->setPosition(center + agl::Vec<float, 2>{x, y});
+				rect->setPosition(pos);
 				rect->setColor(DBLUE);
 
 				window.drawShape(*rect);
 
+				pos += {LISTPADDING, LISTPADDING};
+
 				text->clearText();
 				text->setColor(agl::Color::White);
 				text->setText(action[i].label);
-				text->setPosition(center + agl::Vec<float, 2>{x + LISTPADDING, y + LISTPADDING});
+				text->setPosition(pos);
 				
 				window.drawText(*text);
 			}

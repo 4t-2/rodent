@@ -23,9 +23,8 @@ long currentMilli()
 
 void printGenText(TextPredictor *tp)
 {
-	std::string newText = "std";
+	std::string newText = "starting";
 
-	newText += newText.substr(newText.length() - CHARBUFFERSIZE, CHARBUFFERSIZE);
 	for (int i = 0; i < 500 && newText[newText.length() - 1] != 0; i++)
 	{
 		newText += tp->predict(newText.substr(newText.length() - CHARBUFFERSIZE, CHARBUFFERSIZE));
@@ -59,8 +58,13 @@ void train()
 
 	for (int i = 0; i < text.length() - (CHARBUFFERSIZE - 1); i++)
 	{
-		tp.train(text.substr(i, CHARBUFFERSIZE), text[CHARBUFFERSIZE + i]);
-		std::cout << i << " / " << text.length() - CHARBUFFERSIZE << '\n' << '\n';
+		float error = tp.train(text.substr(i, CHARBUFFERSIZE), text[CHARBUFFERSIZE + i]);
+
+		if (i % 100 == 0)
+		{
+			std::cout << error << '\n';
+			std::cout << i << " / " << text.length() - CHARBUFFERSIZE << '\n' << '\n';
+		}
 	}
 
 	std::fstream fs("modelstruct", std::ios::out);
@@ -344,8 +348,6 @@ int main()
 
 	TextPredictor *tp = loadModel();
 
-	printGenText(tp);
-
 	ActionList actionList(&text, &rect);
 
 	actionList.onDraw = [&](auto) {
@@ -365,7 +367,7 @@ int main()
 
 		int max = 0;
 
-		for (int i = Pane::focusPane->textCursorIndex + 1; i >= 0 && newStr.length() < CHARBUFFERSIZE; i--)
+		for (int i = Pane::focusPane->textCursorIndex; i >= 0 && newStr.length() < CHARBUFFERSIZE; i--)
 		{
 			max++;
 			char c = str[i];
@@ -397,7 +399,7 @@ int main()
 		{
 			int mod = 0;
 
-			if(actionList.rightDown)
+			if (actionList.rightDown)
 			{
 				mod = -32;
 			}

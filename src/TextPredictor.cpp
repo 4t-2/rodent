@@ -5,8 +5,9 @@
 
 TextPredictor::TextPredictor()
 {
-	in::NetworkStructure netstruct = in::NetworkStructure(1 + (CHARBUFFERSIZE * CHARDIMENSION), {},
-														  CHARDIMENSION); // null, a-z, , \n
+	in::NetworkStructure netstruct =
+		in::NetworkStructure(1 + (CHARBUFFERSIZE * CHARDIMENSION), {CHARBUFFERSIZE * CHARDIMENSION},
+							 CHARDIMENSION); // null, a-z, , \n
 	in::NetworkStructure::randomWeights(netstruct);
 
 	network = new in::NeuralNetwork(netstruct);
@@ -42,7 +43,9 @@ char nodeToChar(int node)
 	if ((node + 96) >= 97 && (node + 96) <= 122)
 	{
 		ni = node + 96;
-	} else {
+	}
+	else
+	{
 		ni = 'z'; // lazy fix
 	}
 	return ni;
@@ -50,9 +53,9 @@ char nodeToChar(int node)
 
 char TextPredictor::predict(std::string input)
 {
-	for(int i = 97; i <= 122; i++)
+	for (int i = 97; i <= 122; i++)
 	{
-		if(nodeToChar(charToNode(i)) != i)
+		if (nodeToChar(charToNode(i)) != i)
 		{
 			std::cout << "false " << i << '\n';
 		}
@@ -103,7 +106,7 @@ char TextPredictor::predict(std::string input)
 	return rank[0].c;
 }
 
-void TextPredictor::train(std::string input, char target)
+float TextPredictor::train(std::string input, char target)
 {
 	std::vector<float> targetValue;
 	targetValue.resize(CHARDIMENSION + 1);
@@ -112,7 +115,7 @@ void TextPredictor::train(std::string input, char target)
 
 	this->predict(input);
 
-	std::cout << network->backpropagation(targetValue) << '\n';
+	return network->backpropagation(targetValue);
 }
 
 TextPredictor::~TextPredictor()

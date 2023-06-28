@@ -2,7 +2,7 @@
 
 #include "../lib/IntNet/intnet.hpp"
 
-#define CHARBUFFERSIZE 3
+#define CHARBUFFERSIZE 8
 
 struct CharRank
 {
@@ -19,7 +19,7 @@ class TextPredictor
 		TextPredictor();
 		TextPredictor(in::NeuralNetwork *network);
 
-		void train(std::string input, char target);
+		float train(std::string input, char target);
 
 		char predict(std::string input);
 

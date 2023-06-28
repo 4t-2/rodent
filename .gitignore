@@ -12,3 +12,6 @@ bin/training.txt
 bin/unclean.txt
 CMakeFiles/cmake.check_cache
 CMakeCache.txt
+bin/training
+bin/training.txt.old
+bin/unclean.txt.old
